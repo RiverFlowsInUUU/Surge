@@ -34,22 +34,33 @@
 
 ## 🚀 快速开始
 
+先选一份配置（两版的区别见[两份配置](#-两份配置)）：
+
 ```
-1️⃣ 拿配置   →   profiles/lazy.conf
-2️⃣ 填节点   →   [Proxy] 段的占位节点
-3️⃣ 填充值   →   如有的话，改成你自己的
-4️⃣ 导入     →   Surge
+🪶 懒人版                         🧭 分流版
+1️⃣ 拿配置  profiles/lazy.conf     1️⃣ 拿配置  profiles/routing.conf
+2️⃣ 填节点  [Proxy] 的 4 条占位     2️⃣ 填节点  [Proxy] 的 7 条占位
+3️⃣ 填充值  如有的话                3️⃣ 填订阅  Airport 组的 policy-path
+4️⃣ 导入    Surge                  4️⃣ 填充值  如有的话
+                                   5️⃣ 导入    Surge
 ```
 
-| 位置 | 现在是什么 | 填什么 | 必填 |
-|:-----|:-----------|:-------|:----:|
-| `[Proxy]` 的 4 条节点 | `203.0.113.x` + `REPLACE_WITH_*` | 你的节点信息 | ✅ |
-| `[Proxy Group]` 的组成员 | `"Node-A"` … | 你的节点名 / 订阅组名 | ✅ |
-| 测试端点（可选） | `internet-test-url` 国内 / `proxy-test-url` 境外 | 按你的取向换 | ⬜ 可选 |
+**要填什么**
+
+| 位置 | 🪶 `lazy.conf` | 🧭 `routing.conf` | 必填 |
+|:-----|:---------------|:------------------|:----:|
+| `[Proxy]` 节点 | 4 条（`203.0.113.x` + `REPLACE_WITH_*`） | 7 条，**节点名带地区关键词** | ✅ |
+| `[Proxy Group]` 组成员 | `"Node-A"` … | 自动从节点名筛出，通常不用改 | ✅ |
+| 订阅槽位 | — | `Airport` 组 `policy-path` 的 `REPLACE_WITH_YOUR_TOKEN` | ⬜ 可选 |
+| 测试端点（可选） | `internet-test-url` 国内 / `proxy-test-url` 境外 | 同左 | ⬜ 可选 |
+
+> ⚠️ 分流版的节点名**要带地区关键词**（`HK` / `US` / `JP` / `SG` …），
+> 因为地区组是用正则按**节点名**筛的。改名规则见 [`docs/11` §4](docs/11-分流版设计.md)。
+> 不填订阅槽位也能用 —— 那份组会自动留空，只跑你自己手写的节点。
 
 填完节点即可导入，无需其他改动。
 
-📄 **两份形态**：`lazy.conf`（带注释）与 `lazy.min.conf`（纯配置），内容一致，只差注释，取用其一即可。
+📄 **两份形态**：每份配置都有 `.conf`（带注释）与 `.min.conf`（纯配置）两种形态，内容一致，只差注释，取用其一即可。
 
 ---
 
@@ -113,7 +124,9 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 ## 🎯 策略组结构
 
-以 `lazy.conf` 为例：3 个组 / 12 条规则（`routing.conf` 是 16 组 / 15 条，见[两份配置](#-两份配置)）。组与组可以互相引用，最终都收敛到 `Proxy` 或 `DIRECT`。
+两版差异很大：`lazy.conf` 是 **3 个组 / 12 条规则**，`routing.conf` 是 **16 个组 / 15 条规则**。
+
+### 🪶 `lazy.conf` —— 3 个组
 
 **✈️ 节点** —— 4 条占位节点
 
@@ -128,8 +141,27 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 - 🤖 `AI` · `smart` —— AI 流量独立出口，承载 `Node-C` / `Node-D`，承接 `AI.list`
 - 🛑 `AD` · `select` —— 独立手动开关（`REJECT` / `DIRECT`），不牵动规则引擎
 
+### 🧭 `routing.conf` —— 16 个组
+
+**✈️ 节点** —— 7 条占位节点，**节点名里带地区关键词**，供下面的正则筛选：
+`Node-HK-01` / `Node-HK-02` / `Node-US-01` / `Node-JP-01` / `Node-SG-01` / `Node-Relay-01` / `Node-Relay-02`
+
+**🎛️ 四层结构**
+
+| 层 | 组 | 类型 | 作用 |
+|:---|:---|:----:|:-----|
+| 🎯 总入口 | `Proxy` / `Smart` | `smart` | 全部节点参与打分，自动选最快 |
+| 📡 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
+| 🌏 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | 用 `policy-regex-filter` **按节点名正则筛**出同地区节点 |
+| 💎 精选 | `MAX` | `smart` | 只筛**倍率为 `0.x`** 的节点（`policy-regex-filter` 用负向断言匹配倍率） |
+| 🧩 应用 | `ChatGPT` / `Claude` / `AI` / `Final` | `select` | **把地区组当子节点列进去**，需要时可手动切地区 |
+| 🛑 开关 | `AD` | `select` | 同 lazy，独立手动开关 |
+
 > 📌 拦截动作走**字面量 `REJECT`**（为了拿到 `pre-matching` 的 DNS 阶段拦截能力），
 > `AD` 组则作为**独立的手动干预入口**保留 —— 这是刻意的分层。说明见 [`DetailsReadme` §13.3](DetailsReadme/DetailsReadme.md#133-ad-组的定位独立的手动开关)。
+>
+> 📌 地区组为什么能"按节点名筛"、`MAX` 的倍率正则怎么写、以及
+> **Smart 组为什么不能把其他组当子策略**，见 [`docs/11-分流版设计.md`](docs/11-分流版设计.md) §3–§4。
 
 ---
 
@@ -137,21 +169,52 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**，后面的不再看。
 
-| 分类 | 规则 / 规则集 | 去向 |
-|:-----|:--------------|:----:|
-| 🛡️ ① 白名单守卫 | `jinx surge-white-guard.list`（43 条） | 直连 |
-| 🚫 ② 广告拦截 | `jinx surge-ads.list`（3891 条）`pre-matching` | 拒绝 |
-| 🤖 ③ AI 分流 | `AI.list`（49 条） | `AI` 组 |
-| 🎮 ④ real-ip 主机名 | `nintendo.net` / `playstation.net` / `xboxlive.com` | 代理 |
-| 🍎 ⑤ Apple 系统 | `SYSTEM`（内置） | 直连 |
-| 🏠 ⑥ 内网直连 | `LAN` / `private.txt` | 直连 |
-| 🇨🇳 ⑦ 国内直连 | `direct.txt`（11 万条域名） | 直连 |
-| 🌏 ⑧ GeoIP CN | 中国 IP | 直连 |
-| 🌐 ⑨ 兜底 | `default` | `Proxy` |
+两版**共用同一条骨架**，只在「AI 分流」和「兜底」两段不同：
 
-**铁律**：**白名单(DIRECT) → 黑名单(REJECT) → 常规分流（`direct.txt` / `GEOIP,CN`）**。REJECT 绝不能排在 `direct.txt` / `GEOIP,CN` 之后 —— 那等于白加。
+| 分类 | 🪶 `lazy.conf`（12 条） | 🧭 `routing.conf`（15 条） |
+|:-----|:------------------------|:---------------------------|
+| 🛡️ ① 白名单守卫 | `surge-white-guard.list`（43 条） | 同左 |
+| 🚫 ② 广告拦截 | `surge-ads.list`（3891 条） | 同左 |
+| 🤖 ③ AI 分流 | `AI.list`（49 条） → `AI` | **拆成 4 条**（见下） |
+| 🎮 ④ real-ip 主机名 | `nintendo.net` / `playstation.net` / `xboxlive.com` | 同左 |
+| 🍎 ⑤ Apple 系统 | `SYSTEM`（内置） | 同左 |
+| 🏠 ⑥ 内网直连 | `LAN` / `private.txt` | 同左 |
+| 🇨🇳 ⑦ 国内直连 | `direct.txt`（11 万条域名） | 同左 |
+| 🌏 ⑧ GeoIP CN | 中国 IP | 同左 |
+| 🌐 ⑨ 兜底 | `default` → `Proxy` | **`Final` 组**（可手动改道） |
 
-> 📌 完整的 12 条逐条清单与「为什么 IP 类规则必须放最后」见 [`DetailsReadme` §1.4](DetailsReadme/DetailsReadme.md#14--rule12-条逐条)。
+**③ AI 分流：一版够用，一版可挑**
+
+- 🪶 `lazy.conf` —— 只有 `AI.list` 一条，全部 AI 流量走 `AI` 组，**不用挑**。
+- 🧭 `routing.conf` —— 拆成 4 条，按厂商分家，**可以给不同厂商挑不同地区**：
+
+  | 规则集 | 去向 | 说明 |
+  |:-------|:-----|:-----|
+  | `OpenAI.list` | `ChatGPT` | ChatGPT / Sora |
+  | `Anthropic.list` | `Claude` | Anthropic 官方域名 |
+  | `Claude.list` | `Claude` | 补充集，与上一条同去向 |
+  | `AI.list`（49 条） | `AI` | 其余 AI 服务（Gemini 等） |
+
+  之所以 `Anthropic.list` 和 `Claude.list` 并列同一去向，是因为两个上游集覆盖面不同，**取并集更稳**。
+
+**⑨ 兜底：一版硬指，一版可改道**
+
+- 🪶 `lazy.conf` —— `FINAL` 直接指向 `Proxy`，没有可改的余地。
+- 🧭 `routing.conf` —— `FINAL,Final,dns-failed`，兜底指向 `Final` **选择组**，
+  平时跟 `Proxy` 行为一致，需要时可在面板上手动改道。
+
+**两版都遵守的铁律**
+
+1. **白名单(DIRECT) → 黑名单(REJECT) → 常规分流（`direct.txt` / `GEOIP,CN`）**。
+   REJECT 绝不能排在 `direct.txt` / `GEOIP,CN` 之后 —— 那等于白加。
+2. **IP 类规则（`LAN` / `private.txt` / `direct.txt` / `GEOIP,CN`）必须带 `no-resolve`，
+   且必须排在 `FINAL` 之前。** 这两件事是一体的：补了 `no-resolve` 就关掉了「解析后判 IP 归属」这条直连路径，
+   所以**域名体量足够的国内直连集必须一起交付**，否则国内域名整片落进兜底组。
+3. **`pre-matching` 的策略必须是字面量 `REJECT`**，不能是策略组 —— 组在运行时可能解析成 `DIRECT`，
+   Surge 会**直接拒绝加载整份配置**。
+
+> 📌 逐条清单（lazy 12 条 / routing 15 条）与「为什么 IP 类规则必须放最后」见
+> [`DetailsReadme` §1.4](DetailsReadme/DetailsReadme.md#14--rule12-条逐条) 与 [`docs/11` §5](docs/11-分流版设计.md)。
 
 ---
 
