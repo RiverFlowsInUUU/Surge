@@ -2,8 +2,14 @@
 
 > **何时读**：要产出一份加固后的 Surge profile 时。或者想对照现成模板检查自己配置缺了什么。
 >
-> 本文件是 [`profiles/lazy.conf`](../../profiles/lazy.conf) 的完整复刻 + 逐行理由。
+> 本文件是 [`profiles/lazy.conf`](../../profiles/lazy.conf) 的完整复刻 + 逐行理由 ——
+> **刻意用最简的那份做教学载体**（3 组 / 12 条），把每一段的理由讲透。
 > 只想直接拿走用 → 用仓库里的 `profiles/lazy.conf`（带注释）或 `profiles/lazy.min.conf`（纯配置）。
+>
+> 📌 **本文教的加固结构（`[General]` 段、规则顺序铁律、`no-resolve` 成对交付）
+> 对两份配置都适用** —— 分流版只是在 `[Proxy Group]` 与 `[Rule]` 上更细。
+> 分流版专属的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）
+> 见 [`docs/11`](../../docs/11-分流版设计.md)。
 
 ---
 

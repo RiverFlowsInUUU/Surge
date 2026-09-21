@@ -30,7 +30,7 @@ Agent 会自动加载。
 | `scripts/_surge_common.py` | 共享逻辑（INI 解析 / 端点判据 / `policy_index`），**所有脚本从这里 import** |
 | `tests/run.sh` | 6 阶段回归，15 个断言 |
 | `tests/architecture.sh` | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态 DNS 段一致性 / lazy↔routing DNS 段一致性 / 规则顺序铁律） |
-| `tests/*.conf` | 3 个 fixture（1 个期望通过 + 2 个**期望判负**） |
+| `tests/*.conf` | 3 个基础 fixture（1 个期望通过 + 2 个**期望判负**） |
 | `tests/fixtures/bad_region_filter.conf` | 第 4 个 fixture，**期望判负**：刻意让 Hong Kong 组的关键词与 `Other Regions` 不同步 |
 
 > 📐 **为什么拆**：Anthropic 官方 skill 撰写规范要求 `SKILL.md` 正文 **< 500 行**

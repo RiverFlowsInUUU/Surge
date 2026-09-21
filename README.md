@@ -214,7 +214,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
    Surge 会**直接拒绝加载整份配置**。
 
 > 📌 逐条清单（lazy 12 条 / routing 15 条）与「为什么 IP 类规则必须放最后」见
-> [`DetailsReadme` §1.4](DetailsReadme/DetailsReadme.md#14--rule12-条逐条) 与 [`docs/11` §5](docs/11-分流版设计.md)。
+> [`DetailsReadme` §14](DetailsReadme/DetailsReadme.md#14--rule两版规则顺序) 与 [`docs/11` §5](docs/11-分流版设计.md)。
 
 ---
 
@@ -234,8 +234,8 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 更新日志（按时间倒序，遵循 Keep a Changelog）
 - 📘 [`DetailsReadme/`](DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
 - 🧭 [`docs/11-分流版设计.md`](docs/11-分流版设计.md) —— 分流版：`flatten` 的对应写法 · Smart 组不能嵌套组 · 地区关键词双份
-- 📂 [`docs/`](docs/) —— 其余 8 篇专题：DNS 怎么工作 / 为什么泄露 / 加固清单 / 逐段讲解 / 审计读数 …
-- 🧪 [`skill/`](skill/) —— 3 个审计脚本、回归测试与方法论
+- 📂 [`docs/`](docs/) —— 其余 9 篇专题：DNS 怎么工作 / 为什么泄露 / 加固清单 / 逐段讲解 / 审计读数 …
+- 🧪 [`skill/`](skill/) —— 4 个审计脚本、回归测试与方法论
 
 ---
 

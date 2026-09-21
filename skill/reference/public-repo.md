@@ -8,23 +8,25 @@
 
 ```
 surge-anti-dns-leak/
-├── README.md                    # 门面：快速开始 / 文件结构 / 原理 / 组结构 / 规则顺序 / 来源
+├── README.md                    # 门面：快速开始 / 两份配置 / 原理 / 组结构 / 规则顺序 / 来源
 ├── CHANGELOG.md                 # 更新日志（Keep a Changelog，时间倒序）
 ├── LICENSE                      # MIT
 ├── .gitignore
-├── profiles/                    # 2 份配置（带注释 / 纯配置，内容一致）
-│   ├── lazy.conf                # 带注释 —— 改这份
-│   └── lazy.min.conf            # 纯配置 —— 导入用
+├── profiles/                    # 4 份配置 = 2 种分工 × 2 种形态
+│   ├── lazy.conf                # 懒人版（带注释）—— 改这份
+│   ├── lazy.min.conf            # 懒人版（纯配置）—— 导入用
+│   ├── routing.conf             # 分流版（带注释）—— 改这份
+│   └── routing.min.conf         # 分流版（纯配置）—— 导入用
 ├── icons/                       # 26 个 PNG（本地，不跨项目引用）
-├── docs/                        # 01–10 专题
+├── docs/                        # 01–11 专题
 ├── DetailsReadme/
 │   └── DetailsReadme.md         # 完整技术文档（18 节）
 └── skill/
     ├── SKILL.md                 # 方法论主干
     ├── README.md                # 脚本用法
-    ├── reference/               # 6 个引用文件
-    ├── scripts/                 # 3 审计脚本 + 1 共享模块
-    └── tests/                   # 5 阶段回归 + 3 fixture + architecture.sh + check_links.py
+    ├── reference/               # 引用文件（含本文）
+    ├── scripts/                 # 4 个审计脚本 + 1 个共享模块
+    └── tests/                   # 6 阶段回归 + 4 个 fixture + architecture.sh + check_links.py
 ```
 
 ### 1.1 各层的职责边界
@@ -95,33 +97,45 @@ GitHub 上**表格宽度不可控**（`.markdown-body table` 是
 
 ## 3 · 文件组织
 
-### 3.1 不设版本号
+### 3.1 不设版本号，但可以有「分工」
 
 这是**模板**不是软件。使用者关心的是「结构是什么样」，不是「补丁号」。
-需要更轻的配置就在 `lazy.conf` 上**直接删**，不另开版本 ——
-理由见 [`docs/07`](../../docs/07-文件版本沿革.md) §3.2（同一件事写在两个地方，
-早晚会只改一处）。
+
+本仓库有**两份配置**：`lazy.conf`（懒人版）与 `routing.conf`（分流版）。
+**这是分工关系，不是版本关系** —— 像"基础款"和"进阶款"，
+而不是 v1 和 v2。选一份用，不要叠加。
+
+⚠️ **判断标准**：两份是否在解决**不同的需求**？
+- 是 → 可以共存（`lazy` 一个出口够用 / `routing` 要按应用按地区分流）
+- 否、只是同一需求的两种取舍 → **那是版本分叉，必须消灭第二处**
+  （这就是 `v0` 被删的原因，见 [`docs/07`](../../docs/07-文件版本沿革.md) §3）
+
+想让你手头那份更轻，就在**它上面直接删**，不另开第三份。
 
 ### 3.2 两种形态
 
 `.conf`（带注释，给人读）+ `.min.conf`（纯配置）。
-**内容必须一致，只差注释** —— 由 `architecture.sh` 的 16 键一致性断言兜底。
+**内容必须一致，只差注释** —— 由 `architecture.sh` 的 16 键一致性断言兜底
+（②-a 管 lazy、②-b 管 routing、②-c 管两份之间）。
 
 ⚠️ `.min.conf` 里**必须保留 `# audit-waive:` 行** —— 那是有语义的注释。
+⚠️ `.min.conf` 是**脚本生成的**，生成器会剥掉注释，这行要**手工补回**。
 
-### 3.3 想加第二个配置的 6 条清单
+### 3.3 想加第三份配置的 6 条清单
 
-不推荐。真要加，必须同时满足：
+**先问：这是新分工，还是老配置的另一种写法？** 后者不推荐。
+确认是新分工后，必须同时满足：
 
-1. 与 `lazy.conf` 的 DNS 段逐字节一致（或说明为什么必须不同，并改测试）
+1. **DNS 段与 `lazy.conf` 逐字节一致**（这是本仓库唯一的跨配置断言 ②-c；
+   若确实必须不同，要说明理由并改测试）
 2. 规则顺序符合铁律：白名单 → 黑名单 → 常规分流
 3. `FINAL` 之前有域名体量足够的国内直连规则集
 4. 所有 IP 类规则带 `no-resolve`
-5. 节点全部占位化（`203.0.113.x` + `REPLACE_WITH_*`）
+5. 节点全部占位化（`203.0.113.x` + `REPLACE_WITH_*`），订阅 token 用 `REPLACE_WITH_YOUR_TOKEN`
 6. 若有豁免，`# audit-waive:` 写在文件里
 
-这 6 条就是 `architecture.sh` 的全部断言。
-**能过测试的版本才叫一个新版本，否则只是一个改坏了的副本。**
+这 6 条基本就是 `architecture.sh` 的全部断言。
+**能过测试的才叫一份新配置，否则只是一个改坏了的副本。**
 
 ---
 
@@ -165,7 +179,7 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 ## 5 · 全部验证都在本地 —— 刻意不挂 CI
 
 ```bash
-bash skill/tests/run.sh              # 5 阶段，9 断言
+bash skill/tests/run.sh              # 6 阶段，15 个断言
 SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 ```
 
@@ -186,14 +200,18 @@ SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 改完任何东西之后：
 
 ```
-1. bash skill/tests/run.sh                      → 12 passed, 0 failed
-2. python skill/scripts/check_surge_dns.py  profiles/lazy.conf   → exit 0
-3. python skill/scripts/check_surge_dns.py  profiles/lazy.conf   → exit 0
-4. （改了规则集引用时）python skill/scripts/audit_ruleset_content.py profiles/lazy.conf
-5. （改了规则时）      python skill/scripts/audit_routing_coverage.py profiles/lazy.conf
-6. （改了标题时）重算所有锚点，检查相对链接
-7. （push 前）grep 一遍敏感串 + 跑一次 `architecture.sh`
+1. bash skill/tests/run.sh                      → 15 passed, 0 failed
+2. python skill/scripts/check_surge_dns.py  profiles/lazy.conf     → exit 0
+3. python skill/scripts/check_surge_dns.py  profiles/routing.conf  → exit 0
+4. （改了地区关键词时）python skill/scripts/audit_region_filters.py profiles/routing.conf  → 9 passed
+5. （改了规则集引用时）python skill/scripts/audit_ruleset_content.py  profiles/{lazy,routing}.conf
+6. （改了规则时）      python skill/scripts/audit_routing_coverage.py profiles/{lazy,routing}.conf
+7. （改了标题时）重算所有锚点，检查相对链接
+8. （push 前）grep 一遍敏感串 + 跑一次 `architecture.sh`
 ```
+
+> 📌 `run.sh` 已经把上面第 2–6 步全跑了一遍（含联网阶段）。
+> 单独跑这几条只在**定位失败原因**时用。
 
 ### 6.1 相对链接检查
 

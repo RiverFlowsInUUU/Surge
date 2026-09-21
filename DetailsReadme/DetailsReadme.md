@@ -16,8 +16,8 @@
 > [10 · `hijack-dns` 的边界](#10--hijack-dns-的边界) ·
 > [11 · 规则集与刷新](#11--规则集与刷新) ·
 > [12 · `no-resolve` 的双刃](#12--no-resolve-的双刃) ·
-> [13 · `[Proxy Group]`：三个组与两个「不能用组」的地方](#13--proxy-group三个组与两个不能用组的地方) ·
-> [14 · `[Rule]`：12 条逐条](#14--rule12-条逐条) ·
+> [13 · `[Proxy Group]`：组结构与两处「不能用组」的地方](#13--proxy-group组结构与两处不能用组的地方) ·
+> [14 · `[Rule]`：两版规则顺序](#14--rule两版规则顺序) ·
 > [15 · 审计体系](#15--审计体系) ·
 > [16 · 已知取舍](#16--已知取舍) ·
 > [17 · FAQ](#17--faq) ·
@@ -267,7 +267,9 @@ always-real-ip = *.lan, *.local, *.localdomain, *.home.arpa,
 
 ## 4 · `[Proxy]` 与占位符
 
-### 4.1 四条占位节点
+### 4.1 占位节点
+
+**`lazy.conf` —— 4 条**（`Node-A` ~ `Node-D`）：
 
 ```
 Node-A = hysteria2, 203.0.113.10, 52341, password=REPLACE_WITH_YOUR_PASSWORD, sni=REPLACE_WITH_YOUR_SNI
@@ -282,6 +284,21 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 | `Node-B` | `hysteria2` | 落地节点 ②，同时是 `Node-C` 的 `underlying-proxy` |
 | `Node-C` | `https` | 中转链：经 `Node-B` 出去连 CDN 中转域名 |
 | `Node-D` | `https` | 经 `Node-A` 中转 |
+
+**`routing.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
+
+```
+Node-HK-01 / Node-HK-02   # 中国香港
+Node-US-01                # 美国
+Node-JP-01                # 日本
+Node-SG-01                # 新加坡
+Node-Relay-01 / Node-Relay-02   # 两条中转链，同 lazy 的 C / D
+```
+
+> ⚠️ **命名不是装饰，是功能** —— 地区组用 `policy-regex-filter` 按**节点名**筛节点。
+> 叫 `HK-01` 会进 `Hong Kong` 组，叫 `香港一号` 也会，叫 `node1` 则哪个地区组都进不去。
+> 命名规则与关键词表见 [`docs/11` §4](../docs/11-分流版设计.md#4--地区名怎么筛正则)。
+> 换成你自己的节点时，**保持名字里的地区关键词**即可。
 
 ### 4.2 为什么 `download-bandwidth` 不写
 
@@ -592,9 +609,11 @@ GEOIP,CN,DIRECT,no-resolve    # 对未解析的主机名直接跳过
 
 ---
 
-## 13 · `[Proxy Group]`：三个组与两个「不能用组」的地方
+## 13 · `[Proxy Group]`：组结构与两处「不能用组」的地方
 
-### 13.1 三个组
+### 13.1 两版的组结构
+
+**`lazy.conf` —— 3 个组**
 
 ```
 Proxy = smart, "Node-A", "Node-B", icon-url=…/Proxy.png
@@ -608,10 +627,32 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
-### 13.2 不能用组的地方 ①：`pre-matching`
+**`routing.conf` —— 16 个组**
 
-见 §8.2。`pre-matching` 的规则策略**必须是字面量 REJECT 族**，写成组会加载失败。
-所以广告拦截写的是 `REJECT` 而不是 `AD`。
+| 层 | 组 | 类型 | 作用 |
+|:---|:---|:----:|:-----|
+| 总入口 | `Proxy` / `Smart` | `smart` | 全部节点参与打分 |
+| 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
+| 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
+| 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
+| 应用 | `ChatGPT` / `Claude` / `AI` / `Final` | `select` | 地区组作为**子节点**列进去 |
+| 开关 | `AD` | `select` | 同 lazy |
+
+> ⚠️ **注意类型差异**：应用组（`ChatGPT` / `Claude` / `AI` / `Final`）是 `select` 而不是 `smart` ——
+> 因为 **Smart 组不能拿其他组当子策略**（见 §13.2 ②），而应用组要"把地区组列进去"。
+> 地区组用 `smart` 是因为它筛的是**具体节点**，需要打分。
+> 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md#22--smart-组不能拿组名当子策略)。
+
+### 13.2 不能用组的地方
+
+**① `pre-matching`** —— 见 §8.2。`pre-matching` 的规则策略**必须是字面量 REJECT 族**，
+写成组会加载失败。所以广告拦截写的是 `REJECT` 而不是 `AD`。
+
+**② `smart` 组当父组** —— 官方明确：Smart 策略组**不可以使用其他组作为子策略**，
+也不可以用作 `url-test` / `load-balance` 组的子策略。
+想要"把一个组的成员并进来"，正确写法是 `include-other-group="X"`
+（把 X 的**已解析成员**复制过来），而不是把 `X` 当成成员名写进去。
+详见 [`docs/11` §2.1 / §2.2](../docs/11-分流版设计.md)。
 
 ### 13.3 `AD` 组的定位：独立的手动开关
 
@@ -645,9 +686,11 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 ---
 
-## 14 · `[Rule]`：12 条逐条
+## 14 · `[Rule]`：两版规则顺序
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**。
+
+**`lazy.conf` —— 12 条**
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
@@ -664,7 +707,23 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 11 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 12 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-### 14.1 铁律
+**`routing.conf` —— 15 条（只有两处不同）**
+
+| # | 规则 | 策略 | 与 lazy 的差异 |
+|:-:|:-----|:----:|:---------------|
+| 1–2 | 白名单守卫 / 广告拦截 | `DIRECT` / `REJECT` | 同 lazy |
+| **3** | `RULE-SET,…,OpenAI.list` | `ChatGPT` | **新增** |
+| **4** | `RULE-SET,…,Anthropic.list` | `Claude` | **新增** |
+| **5** | `RULE-SET,…,Claude.list` | `Claude` | **新增**（与上一条同去向，取并集） |
+| **6** | `RULE-SET,…,AI.list` | `AI` | 原第 3 条，**位置下移**（三条厂商专属规则优先） |
+| 7–14 | 游戏机 3 条 / SYSTEM / LAN / private / direct / GEOIP | — | 同 lazy |
+| **15** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+
+> 📌 **顺序要点**：三条厂商专属规则（`OpenAI` / `Anthropic` / `Claude`）必须排在
+> 通用 `AI.list` **之前** —— 否则 AI 域名会先被 `AI.list` 接走，永远轮不到
+> `ChatGPT` / `Claude` 组。这是"更具体的规则在前"的又一例。
+
+### 14.1 铁律（两版通用）
 
 **白名单(DIRECT) → 黑名单(REJECT) → 常规分流（`direct.txt` / `GEOIP,CN`）**
 
@@ -681,29 +740,43 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 万一规则求值因 DNS 失败而中断，用代理策略而不是让请求直接失败。
 走代理的域名由节点远端解析 —— 所以这一条既修好了失败，也**避免了一次明文本地查询**。
 
+> 📌 两版的 `FINAL` 策略不同：`lazy` 直接写 `Proxy`（`smart` 组，自动选最快节点）；
+> `routing` 写 `Final`（`select` 组，默认第一成员是 `Proxy`）。
+> 后者多一层间接，换来的是**面板上可手动改道**。见
+> [`docs/11` §5](../docs/11-分流版设计.md#兜底为什么不直接写-proxy)。
+
 ---
 
 ## 15 · 审计体系
 
-### 15.1 三个脚本
+### 15.1 四个脚本 + 两个测试
 
 | 脚本 | 审什么 | 需要联网 |
 |:-----|:-------|:--------:|
 | `check_surge_dns.py` | 文件内部的**结构**（12 项检查） | ❌ |
 | `audit_ruleset_content.py` | **远程规则集的内容**（缺 no-resolve 的 IP 条目 / 直连集合的域名体量） | ✅ |
-| `audit_routing_coverage.py` | 拿**真实域名走一遍** `[Rule]`，看最终去哪 | ✅ |
-| `skill/tests/architecture.sh` | 三条项目不变量（占位符纪律 / DNS 段一致性 / 规则顺序铁律） | ❌ |
+| `audit_routing_coverage.py` | 拿**真实域名走一遍** `[Rule]`，看最终去哪（期望表按配置自动切换） | ✅ |
+| `audit_region_filters.py` | **地区组正则的一致性**（`Other Regions` 的负向断言有没有漏词、组间有没有重叠） | ❌ |
+| `skill/tests/architecture.sh` | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态一致性 / lazy↔routing 一致性 / 规则顺序铁律） | ❌ |
 | `skill/tests/check_links.py` | markdown 相对链接与锚点（改标题后**静默失效**的那一类问题） | ❌ |
 
-### 15.2 为什么需要三个而不是一个
+> 📌 第 4 个（`audit_region_filters.py`）是分流版带来的：`Other Regions` 用的负向断言
+> 把另外 6 个地区组的关键词**抄了一遍**（68 个 token），而 Surge 的 `filter`
+> 只吃字面正则、不支持变量 ⇒ 结构上消灭不掉这份拷贝。
+> **兜底做法是给拷贝配一个比对器，并给比对器配一个判负样本** ——
+> 见 [`skill/reference/pitfalls.md` 坑 16](../skill/reference/pitfalls.md)。
+
+### 15.2 为什么需要多个而不是一个
 
 它们回答的是**不同层次**的问题：
 
 - `check_surge_dns.py`：「这份文件自洽吗？」
 - `audit_ruleset_content.py`：「它引用的东西里有雷吗？」（profile 里看不见）
 - `audit_routing_coverage.py`：「一个真实请求进来，实际去哪？」（结构全绿也可能错）
+- `audit_region_filters.py`：「两处必须一致的正则，现在一致吗？」（不一致时**静默失效**）
 
 第三个是 Egern 项目的教训换来的：**两个审计脚本双双通过，分流却整片是坏的。**
+第四个则是"消灭不掉拷贝时怎么办"的答案。
 
 ### 15.3 豁免机制
 
@@ -867,15 +940,18 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
 
-### 18.2 想加第二个配置
+### 18.2 想加第三份配置
 
-不推荐（理由见 [`docs/07`](../docs/07-文件版本沿革.md) §3.2）。真要加，见那里的
-6 条清单 —— 那 6 条就是 `architecture.sh` 的全部断言。**能过测试的才算一份新配置。**
+**先问：这是新分工，还是老配置的另一种写法？** 后者不推荐（那就是版本分叉，
+见 [`docs/07`](../docs/07-文件版本沿革.md) §3.2 / §6）。确认是新分工后，见
+[`docs/07` §6](../docs/07-文件版本沿革.md) 的 6 条清单 ——
+那 6 条基本就是 `architecture.sh` 的全部断言。
+**能过测试的才算一份新配置。**
 
 ### 18.3 全部验证都在本地
 
 ```bash
-bash skill/tests/run.sh              # 5 阶段，9 个断言
+bash skill/tests/run.sh              # 6 阶段，15 个断言
 SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 ```
 
