@@ -263,8 +263,12 @@ FOREIGN_PROBES = {
 |:-----|:-----------------|:--------------------|
 | `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
 | `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
-| `gemini.google.com` | `AI` / `PROXY` | `AI` |
-| 其余 5 个 | `PROXY` | `FINAL` |
+| `gemini.google.com` | `AI` / `PROXY` | **`GEMINI`** |
+| `github.com` | `PROXY` | **`GITHUB`** |
+| `www.google.com` | `PROXY` | **`GOOGLE`** |
+| `www.youtube.com` | `PROXY` | **`YOUTUBE`** |
+| `t.me` | `PROXY` | **`TELEGRAM`** |
+| `x.com` | `PROXY` | **`TWITTER`** |
 
 选择哪套表由 `foreign_expectations()` 判定，**判据是「文件里实际定义了哪些组」**
 （存在 `ChatGPT` / `Claude` 组即为分流版），**不是文件名** ——
@@ -275,9 +279,26 @@ FOREIGN_PROBES = {
 （国内域名全落到 `Final → 代理`，两个审计脚本双双通过）。
 期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
 
-⚠️ 分流版里 `github.com` / `google.com` / `youtube.com` 等期望落 `FINAL`：
-本版只做了 3 个应用组，未单列 GitHub / Google / YouTube 组，落兜底是**正确行为**。
-将来补上这些组时，本表要同步加行。
+> 🔍 **这张表曾经是"漏项的证据"**：分流版最初只做了 ChatGPT / Claude / AI 三组，
+> 于是 6 个探针的期望值被写成 `FINAL` —— 它如实记录了"这些域名没人接住"，
+> 但当时被当成了预期行为（`FINAL` 也算"走了代理"，测试全绿）。
+> 补上 10 个应用组后，期望值收紧到专属组名，这个坑由此闭合。
+> **教训：期望值里出现兜底组名，就值得问一句"本该由谁接住"。**
+
+### D 的 Apple 探针
+
+```python
+APPLE_PROBES = [
+    "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
+    "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",
+]
+```
+
+这 6 个必须命中 `DIRECT`。它们**不在** Surge 内置的 `SYSTEM` 集合里
+（`SYSTEM` 只管激活 / 推送 / 配对的核心主机），靠的是 `Apple_All_No_Resolve.list`。
+
+⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 推送偶发延迟」——
+属于用户不会主动报障、但体验确实变差的一类，所以必须靠审计钉住。
 
 ### C 的意义
 

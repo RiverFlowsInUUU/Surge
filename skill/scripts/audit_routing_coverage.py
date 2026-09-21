@@ -59,10 +59,12 @@ DOMESTIC_PROBES = [
 #    期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
 #
 #    两套期望的差别只在于组名：lazy.conf 只有一个 AI 组，
-#    routing.conf 把它拆成了 ChatGPT / Claude / AI 三个组。
+#    routing.conf 把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
+#    并把 Spotify / YouTube / GitHub / Google / Microsoft / Telegram / Twitter /
+#    WeChat 这些也各自单列。
 #    ⚠️ 这不是"顺手放宽"—— 它是**分流版新增能力**的验收条件：
 #       chat.openai.com 必须落进 ChatGPT，而不只是"随便落进某个代理组"。
-#       如果只看"不是 DIRECT"，把三个组全指向 Proxy 也能假过。
+#       如果只看"不是 DIRECT"，把四个组全指向 Proxy 也能假过。
 FOREIGN_PROBES = {
     "chat.openai.com": {"AI", "PROXY"},
     "api.anthropic.com": {"AI", "PROXY"},
@@ -75,15 +77,21 @@ FOREIGN_PROBES = {
 }
 
 # 分流版（routing.conf）—— 精确到应用组名。
+#
+# ⚠️ 这张表的作用是**反向证明「按应用分流」真的接住了域名**：
+#    每个探针必须落进它**专属**的那个组，落到兜底（Final）就算失败。
+#    曾经有 6 个探针是期望 FINAL 的（那时本版确实没有 Spotify / Google /
+#    YouTube / Telegram / Twitter / GitHub 这些组）—— 这恰恰就是漏了分流的证据。
+#    补齐这些组之后，期望值同步收紧到专属组名，防止将来有人删组而无人发现。
 FOREIGN_PROBES_ROUTING = {
-    "chat.openai.com": {"CHATGPT"},
+    "chat.openai.com":   {"CHATGPT"},
     "api.anthropic.com": {"CLAUDE"},
-    "gemini.google.com": {"AI"},       # Gemini 在本版归 AI 组（未单列 Gemini 组）
-    "github.com": {"FINAL"},            # 本版未单列 GitHub 组，落兜底（组名 Final）
-    "www.google.com": {"FINAL"},
-    "www.youtube.com": {"FINAL"},
-    "t.me": {"FINAL"},
-    "x.com": {"FINAL"},
+    "gemini.google.com": {"GEMINI"},
+    "github.com":        {"GITHUB"},
+    "www.google.com":    {"GOOGLE"},
+    "www.youtube.com":   {"YOUTUBE"},
+    "t.me":              {"TELEGRAM"},
+    "x.com":             {"TWITTER"},
 }
 
 
@@ -115,6 +123,17 @@ FALSE_POSITIVE_PROBES = [
     "github.com", "objects.githubusercontent.com", "cdn.jsdelivr.net",
     "www.icloud.com", "gateway.icloud.com", "swcdn.apple.com",
     "www.apple.com", "api.github.com",
+]
+
+# ⭐ Apple 探针：这些是**必须直连**的 Apple 服务域。
+#    它们不在 `SYSTEM` 内置集合里（SYSTEM 只管激活 / 推送 / 配对的核心主机），
+#    靠的是那份 Apple_All_No_Resolve.list。
+#    ⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 偶尔推送延迟」——
+#       属于用户不会主动报障、但体验确实变差的一类。所以要靠审计钉住。
+#       当年 egern 把这条规则集写成不带 no-resolve 的版本，泄露就是从这类"看不见的解析"来的。
+APPLE_PROBES = [
+    "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
+    "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",
 ]
 
 IP_RULE_TYPES = {"IP-CIDR", "IP-CIDR6", "IP-ASN", "GEOIP", "IP-GEOIP", "SRC-IP", "DEST-IP"}
@@ -294,8 +313,24 @@ def main():
                 print(f"   ✅ {d:<32} → {pol}")
     print(f"   {ok_fp}/{len(FALSE_POSITIVE_PROBES)} 未被误杀\n")
 
+    # ── D. Apple 探针必须 DIRECT ────────────────────────────────────────────
+    print("── D · Apple 探针（期望命中 DIRECT）")
+    ok_ap = 0
+    for d in APPLE_PROBES:
+        r = m.match(d)
+        pol = r["policy"] if r else "（无规则命中）"
+        if pol.strip().upper() == "DIRECT":
+            ok_ap += 1
+            if a.show_all:
+                print(f"   ✅ {d:<32} → DIRECT   (第 {r['lineno']} 行 {r['type']})")
+        else:
+            fails.append((d, pol, r))
+            print(f"   ❌ {d:<32} → {pol}（Apple 服务应直连）")
+    print(f"   {ok_ap}/{len(APPLE_PROBES)} 命中 DIRECT\n")
+
     print("─" * 62)
-    total = len(DOMESTIC_PROBES) + len(expectations) + len(FALSE_POSITIVE_PROBES)
+    total = (len(DOMESTIC_PROBES) + len(expectations)
+             + len(FALSE_POSITIVE_PROBES) + len(APPLE_PROBES))
     print(f"result: {total - len(fails)} passed, {len(fails)} failed")
     if fails:
         print("❌ 未通过")

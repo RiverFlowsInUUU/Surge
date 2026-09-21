@@ -47,8 +47,8 @@ surge-anti-dns-leak/
     └── tests/                    # 6 阶段回归 + 4 个 fixture + 链接检查
 ```
 
-**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 12 条，全量一个出口），
-`routing` 是分流版（16 组 / 15 条，按应用 + 按地区）。选一份用，不要叠加。
+**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 13 条，全量一个出口），
+`routing` 是分流版（26 组 / 26 条，按应用 + 按地区）。选一份用，不要叠加。
 分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
 [`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
 
@@ -627,7 +627,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
-**`routing.conf` —— 16 个组**
+**`routing.conf` —— 26 个组**
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -635,13 +635,26 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
 | 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
-| 应用 | `ChatGPT` / `Claude` / `AI` / `Final` | `select` | 地区组作为**子节点**列进去 |
+| 应用 | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Google` / `Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` / `GitHub` / `Microsoft` / `WeChat` / `Final` | `select` | 地区组作为**子节点**列进去 |
 | 开关 | `AD` | `select` | 同 lazy |
 
-> ⚠️ **注意类型差异**：应用组（`ChatGPT` / `Claude` / `AI` / `Final`）是 `select` 而不是 `smart` ——
+> ⚠️ **注意类型差异**：应用组（上面 14 个）是 `select` 而不是 `smart` ——
 > 因为 **Smart 组不能拿其他组当子策略**（见 §13.2 ②），而应用组要"把地区组列进去"。
 > 地区组用 `smart` 是因为它筛的是**具体节点**，需要打分。
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md#22--smart-组不能拿组名当子策略)。
+
+**应用组各自的默认取向**（首项即默认，与 egern v2.5 对齐）：
+
+| 应用组 | 默认 | 备注 |
+|:-------|:----:|:-----|
+| `ChatGPT` / `Gemini` / `AI` | `Proxy` | |
+| `Claude` | **`Taiwan`** | egern 的取向，Claude 对台湾线路较友好 |
+| `Google` | `Gemini` → `Proxy` | 首项是 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」 |
+| `Spotify` / `YouTubeMusic` / `YouTube` | `Proxy` | 媒体类 |
+| `Telegram` / `Twitter` | `Proxy` | 社交类 |
+| `GitHub` | `Proxy` | 开发者服务 |
+| `Microsoft` | **`DIRECT`** | 微软国内可直连，走代理反而慢 |
+| `WeChat` | **`DIRECT`** | 微信直连，**存在的意义是把它从兜底摘出来** |
 
 ### 13.2 不能用组的地方
 
@@ -690,7 +703,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**。
 
-**`lazy.conf` —— 12 条**
+**`lazy.conf` —— 13 条**
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
@@ -700,28 +713,51 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 4 | `DOMAIN-SUFFIX,nintendo.net` | `Proxy` | — | 见 §9.3 |
 | 5 | `DOMAIN-SUFFIX,playstation.net` | `Proxy` | — | 同上 |
 | 6 | `DOMAIN-SUFFIX,xboxlive.com` | `Proxy` | — | 同上 |
-| 7 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 定位 / 配对，内置权威集合 |
-| 8 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
-| 9 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
-| 10 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
-| 11 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
-| 12 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
+| 7 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
+| 8 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.4 |
+| 9 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
+| 10 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
+| 11 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
+| 12 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
+| 13 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing.conf` —— 15 条（只有两处不同）**
+**`routing.conf` —— 26 条（三处不同）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
 | 1–2 | 白名单守卫 / 广告拦截 | `DIRECT` / `REJECT` | 同 lazy |
-| **3** | `RULE-SET,…,OpenAI.list` | `ChatGPT` | **新增** |
-| **4** | `RULE-SET,…,Anthropic.list` | `Claude` | **新增** |
-| **5** | `RULE-SET,…,Claude.list` | `Claude` | **新增**（与上一条同去向，取并集） |
-| **6** | `RULE-SET,…,AI.list` | `AI` | 原第 3 条，**位置下移**（三条厂商专属规则优先） |
-| 7–14 | 游戏机 3 条 / SYSTEM / LAN / private / direct / GEOIP | — | 同 lazy |
-| **15** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+| **3–7** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
+| **8–12** | 媒体社交：`Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` | 同名组 | **新增 5 条** |
+| **13–15** | 开发系统：`GitHub` / `Google` / `Microsoft` | 同名组 | **新增 3 条** |
+| **16** | 即时通讯：`WeChat` | `WeChat` | **新增 1 条** |
+| 17–25 | 游戏机 3 条 / SYSTEM / Apple / LAN / private / direct / GEOIP | — | 同 lazy |
+| **26** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
 
-> 📌 **顺序要点**：三条厂商专属规则（`OpenAI` / `Anthropic` / `Claude`）必须排在
-> 通用 `AI.list` **之前** —— 否则 AI 域名会先被 `AI.list` 接走，永远轮不到
-> `ChatGPT` / `Claude` 组。这是"更具体的规则在前"的又一例。
+> 📌 **三处顺序要点**：
+> 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
+>    `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
+> 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，
+>    排到后面就接不到它，"应用的代理取向"直接失效。
+> 3. 应用段整体排在 Apple / 内网 / 国内直连段**之前** —— 同样是"更具体的规则在前"。
+
+### 14.4 为什么 Apple 规则集必须用 `No_Resolve` 版
+
+这是 egern 项目实测踩出来的坑，直接搬过来：
+
+`Apple_All.list` 里有 **13 条 `IP-CIDR` 没带 `no-resolve`**（`139.178.128.0/18` 等 Apple CDN 段）。
+而这条规则排在后面那些 IP 类规则**之前**、策略又是 `DIRECT` ⇒
+**每个还没被前面规则命中的域名，经过这里都会被强制解析一次**。
+
+那次解析走的是本地 DNS —— 就是泄露本身。
+症状是 dnsleaktest 里「判定结果显示 default → Final → Proxy，但 upstream 显示 bootstrap」：
+为了判定这条 IP 规则而触发的解析走了明文。
+
+`No_Resolve` 版与原版**逐条等价**（只是那 13 条补上了 `,no-resolve`），
+覆盖面无损失，对 IP 形式的连接判定也完全不受影响（IP 本就无需解析）。
+所以这里没有取舍，纯粹是用对版本。
+
+> 📌 当年 egern 把 20 个远程规则集逐个下载核对过：**只有 `Apple_All.list` 存在这个缺陷**。
+> 本项目的 `audit_ruleset_content.py` 会把这条检查自动跑一遍。
 
 ### 14.1 铁律（两版通用）
 

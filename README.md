@@ -9,26 +9,47 @@
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Rules](https://img.shields.io/badge/Rules-12%20%7C%2015-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
 [快速开始](#-快速开始) · [两份配置](#-两份配置) · [文件结构](#-文件结构) · [防泄露原理](#-防泄露原理) · [策略组结构](#-策略组结构) · [规则顺序](#-规则顺序) · [规则来源](#-规则来源) · [更多文档](#-更多文档)
 
 </div>
 
-<table align="center">
+## 📥 复制链接
+
+<table>
   <tr>
-    <td align="center" width="33%">
-      🔒<br><b>零明文 DNS</b><br><sub>引导 / 端点 / 劫持<br>三处收口，明文 :53 不出网</sub>
+    <th align="center" width="50%">🪶&nbsp; 懒人版<br><sub>一个出口，不想调</sub></th>
+    <th align="center" width="50%">🧭&nbsp; 分流版<br><sub>按应用 + 地区分</sub></th>
+  </tr>
+  <tr>
+    <td align="center">
+      <sub>带注释 · 推荐先读</sub><br>
+      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.conf</code>
     </td>
-    <td align="center" width="33%">
-      🧩<br><b>不绑节点与订阅</b><br><sub>节点全为占位符<br>换节点不用改一行结构</sub>
+    <td align="center">
+      <sub>带注释 · 推荐先读</sub><br>
+      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.conf</code>
     </td>
-    <td align="center" width="33%">
-      🧪<br><b>脚本可复跑</b><br><sub>12 项审计 + 分流覆盖<br>回归测试 15 条断言</sub>
+  </tr>
+  <tr>
+    <td align="center">
+      <sub>纯配置 · 体积小</sub><br>
+      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.min.conf</code>
+    </td>
+    <td align="center">
+      <sub>纯配置 · 体积小</sub><br>
+      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.min.conf</code>
     </td>
   </tr>
 </table>
+
+**怎么用**：复制上面任意一条链接 → Surge 里 **配置 → 从 URL 下载** → 粘贴 → 导入。
+两个版本**选一个用，不要叠加**。
+
+> 💡 `.conf` 与 `.min.conf` **内容完全一致**，只差注释。想读懂配置选前者，想省体积选后者。
+> ⚠️ 两种形态的链接都指向 `main` 分支，我会持续更新 —— 想锁定某天的版本请自行 fork。
 
 ---
 
@@ -71,9 +92,9 @@
 | | 🪶 `lazy.conf` | 🧭 `routing.conf` |
 |:--|:---------------|:------------------|
 | 定位 | 懒人版 | 分流版 |
-| 策略组 | 3 个 | 16 个 |
-| 规则 | 12 条 | 15 条 |
-| 出口粒度 | `Proxy` / `AI` / `AD`，全量一个出口 | 按**应用**分（ChatGPT / Claude / AI），组内再按**地区**分 |
+| 策略组 | 3 个 | 26 个 |
+| 规则 | 13 条 | 26 条 |
+| 出口粒度 | `Proxy` / `AI` / `AD`，全量一个出口 | 按**应用**分（ChatGPT / Google / GitHub … 共 14 组），组内再按**地区**分 |
 | 适合 | 只想通、不想调 | 想让 ChatGPT 走美国、Claude 走台湾 |
 | 导入 | `profiles/lazy.conf` | `profiles/routing.conf` |
 
@@ -124,7 +145,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 ## 🎯 策略组结构
 
-两版差异很大：`lazy.conf` 是 **3 个组 / 12 条规则**，`routing.conf` 是 **16 个组 / 15 条规则**。
+两版差异很大：`lazy.conf` 是 **3 个组 / 13 条规则**，`routing.conf` 是 **26 个组 / 26 条规则**。
 
 ### 🪶 `lazy.conf` —— 3 个组
 
@@ -141,12 +162,12 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 - 🤖 `AI` · `smart` —— AI 流量独立出口，承载 `Node-C` / `Node-D`，承接 `AI.list`
 - 🛑 `AD` · `select` —— 独立手动开关（`REJECT` / `DIRECT`），不牵动规则引擎
 
-### 🧭 `routing.conf` —— 16 个组
+### 🧭 `routing.conf` —— 26 个组
 
 **✈️ 节点** —— 7 条占位节点，**节点名里带地区关键词**，供下面的正则筛选：
 `Node-HK-01` / `Node-HK-02` / `Node-US-01` / `Node-JP-01` / `Node-SG-01` / `Node-Relay-01` / `Node-Relay-02`
 
-**🎛️ 四层结构**
+**🎛️ 五层结构**
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -154,8 +175,20 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 | 📡 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
 | 🌏 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | 用 `policy-regex-filter` **按节点名正则筛**出同地区节点 |
 | 💎 精选 | `MAX` | `smart` | 只筛**倍率为 `0.x`** 的节点（`policy-regex-filter` 用负向断言匹配倍率） |
-| 🧩 应用 | `ChatGPT` / `Claude` / `AI` / `Final` | `select` | **把地区组当子节点列进去**，需要时可手动切地区 |
+| 🧩 应用 | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Google` / `Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` / `GitHub` / `Microsoft` / `WeChat` / `Final` | `select` | **把地区组当子节点列进去**，需要时可手动切地区 |
 | 🛑 开关 | `AD` | `select` | 同 lazy，独立手动开关 |
+
+**🧩 应用组各自的默认取向**（与 egern v2.5 对齐；括号内是首项）：
+
+| 应用 | 默认 | 说明 |
+|:-----|:----:|:-----|
+| ChatGPT · Gemini · Claude | 代理 | Claude 例外：默认走 **台湾** 组 |
+| Google | 代理 | 首项是 **`Gemini` 组** —— 即「Google 走 Gemini → Proxy」，多一层可切 |
+| Spotify · YouTubeMusic · YouTube | 代理 | 媒体类，默认总出口，可切地区 |
+| Telegram · Twitter | 代理 | 社交类，默认总出口，可切地区 |
+| GitHub | 代理 | 开发者服务，默认总出口，可切地区 |
+| Microsoft | **DIRECT** | 微软国内可直连，走代理反而慢；需要时面板切 Proxy |
+| WeChat | **DIRECT** | 微信直连，**存在的意义是把它从兜底里摘出来**，别被 `Final` 送进代理 |
 
 > 📌 拦截动作走**字面量 `REJECT`**（为了拿到 `pre-matching` 的 DNS 阶段拦截能力），
 > `AD` 组则作为**独立的手动干预入口**保留 —— 这是刻意的分层。说明见 [`DetailsReadme` §13.3](DetailsReadme/DetailsReadme.md#133-ad-组的定位独立的手动开关)。
@@ -169,31 +202,48 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**，后面的不再看。
 
-两版**共用同一条骨架**，只在「AI 分流」和「兜底」两段不同：
+两版**共用同一条骨架**，只在「按应用分流」和「兜底」两段不同：
 
-| 分类 | 🪶 `lazy.conf`（12 条） | 🧭 `routing.conf`（15 条） |
+| 分类 | 🪶 `lazy.conf`（13 条） | 🧭 `routing.conf`（26 条） |
 |:-----|:------------------------|:---------------------------|
 | 🛡️ ① 白名单守卫 | `surge-white-guard.list`（43 条） | 同左 |
 | 🚫 ② 广告拦截 | `surge-ads.list`（3891 条） | 同左 |
-| 🤖 ③ AI 分流 | `AI.list`（49 条） → `AI` | **拆成 4 条**（见下） |
+| 🤖 ③ 按应用分流 | `AI.list`（49 条） → `AI` | **拆成 13 条**，按厂商 / 应用分家（见下） |
 | 🎮 ④ real-ip 主机名 | `nintendo.net` / `playstation.net` / `xboxlive.com` | 同左 |
-| 🍎 ⑤ Apple 系统 | `SYSTEM`（内置） | 同左 |
+| 🍎 ⑤ Apple 服务 | `SYSTEM` + `Apple_All_No_Resolve.list` | 同左 |
 | 🏠 ⑥ 内网直连 | `LAN` / `private.txt` | 同左 |
 | 🇨🇳 ⑦ 国内直连 | `direct.txt`（11 万条域名） | 同左 |
 | 🌏 ⑧ GeoIP CN | 中国 IP | 同左 |
 | 🌐 ⑨ 兜底 | `default` → `Proxy` | **`Final` 组**（可手动改道） |
 
-**③ AI 分流：一版够用，一版可挑**
+**③ 按应用分流：一版够用，一版可挑**
 
 - 🪶 `lazy.conf` —— 只有 `AI.list` 一条，全部 AI 流量走 `AI` 组，**不用挑**。
-- 🧭 `routing.conf` —— 拆成 4 条，按厂商分家，**可以给不同厂商挑不同地区**：
+- 🧭 `routing.conf` —— 拆成 13 条，按厂商 / 应用分家，**可以给不同厂商挑不同地区**：
 
-  | 规则集 | 去向 | 说明 |
-  |:-------|:-----|:-----|
-  | `OpenAI.list` | `ChatGPT` | ChatGPT / Sora |
-  | `Anthropic.list` | `Claude` | Anthropic 官方域名 |
-  | `Claude.list` | `Claude` | 补充集，与上一条同去向 |
-  | `AI.list`（49 条） | `AI` | 其余 AI 服务（Gemini 等） |
+  | 段 | 规则集 | 去向 |
+  |:---|:-------|:-----|
+  | 🤖 AI 厂商 | `OpenAI.list` | `ChatGPT` |
+  | | `Gemini.list` | `Gemini` |
+  | | `Anthropic.list` + `Claude.list` | `Claude` |
+  | | `AI.list`（49 条） | `AI` |
+  | 🎬 媒体社交 | `Spotify.list` | `Spotify` |
+  | | `YouTubeMusic.list` | `YouTubeMusic` |
+  | | `YouTube.list` | `YouTube` |
+  | | `Telegram.list` | `Telegram` |
+  | | `Twitter.list` | `Twitter` |
+  | 🪟 开发系统 | `GitHub.list` | `GitHub` |
+  | | `Google.list` | `Google` |
+  | | `Microsoft.list` | `Microsoft` |
+  | 💬 即时通讯 | `WeChat.list` | `WeChat` |
+
+  **两处顺序是刻意的**：
+
+  1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
+     `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
+  2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— `github.com` 同时被国家直连清单收录，
+     靠后的规则接不到它，应用的代理取向就失效了。
+     （白名单守卫那条 `DIRECT` 排在更前面，两者不冲突：它只管「别被广告规则误杀」。）
 
   之所以 `Anthropic.list` 和 `Claude.list` 并列同一去向，是因为两个上游集覆盖面不同，**取并集更稳**。
 
@@ -213,7 +263,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 3. **`pre-matching` 的策略必须是字面量 `REJECT`**，不能是策略组 —— 组在运行时可能解析成 `DIRECT`，
    Surge 会**直接拒绝加载整份配置**。
 
-> 📌 逐条清单（lazy 12 条 / routing 15 条）与「为什么 IP 类规则必须放最后」见
+> 📌 逐条清单（lazy 13 条 / routing 26 条）与「为什么 IP 类规则必须放最后」见
 > [`DetailsReadme` §14](DetailsReadme/DetailsReadme.md#14--rule两版规则顺序) 与 [`docs/11` §5](docs/11-分流版设计.md)。
 
 ---
@@ -221,9 +271,11 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 ## 📚 规则来源
 
 - 🛑 [RiverFlowsInUUU/jinx-ads-rules](https://github.com/RiverFlowsInUUU/jinx-ads-rules) —— 广告拦截 + 白名单守卫
+- 🤖 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) —— 各应用规则集（OpenAI / Gemini / Spotify / YouTube / GitHub / Google / Microsoft / WeChat …）
 - 🤖 [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR) —— `AI.list`
 - 🇨🇳 [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) —— `direct.txt` / `private.txt`
 - 🗺️ [adysec/IP_database](https://github.com/adysec/IP_database) —— `GeoLite2-Country.mmdb`
+- 🧭 [RiverFlowsInUUU/egern-anti-dns-leak](https://github.com/RiverFlowsInUUU/egern-anti-dns-leak) —— 分流版的应用分组与地区取向参考
 
 ---
 
