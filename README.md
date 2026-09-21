@@ -8,11 +8,11 @@
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Profiles](https://img.shields.io/badge/Profiles-lazy-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Rules](https://img.shields.io/badge/Rules-12-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Rules](https://img.shields.io/badge/Rules-12%20%7C%2015-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
-[快速开始](#-快速开始) · [文件结构](#-文件结构) · [防泄露原理](#-防泄露原理) · [策略组结构](#-策略组结构) · [规则顺序](#-规则顺序) · [规则来源](#-规则来源) · [更多文档](#-更多文档)
+[快速开始](#-快速开始) · [两份配置](#-两份配置) · [文件结构](#-文件结构) · [防泄露原理](#-防泄露原理) · [策略组结构](#-策略组结构) · [规则顺序](#-规则顺序) · [规则来源](#-规则来源) · [更多文档](#-更多文档)
 
 </div>
 
@@ -25,7 +25,7 @@
       🧩<br><b>不绑节点与订阅</b><br><sub>节点全为占位符<br>换节点不用改一行结构</sub>
     </td>
     <td align="center" width="33%">
-      🧪<br><b>脚本可复跑</b><br><sub>12 项审计 + 分流覆盖<br>回归测试 9 条断言</sub>
+      🧪<br><b>脚本可复跑</b><br><sub>12 项审计 + 分流覆盖<br>回归测试 15 条断言</sub>
     </td>
   </tr>
 </table>
@@ -53,16 +53,44 @@
 
 ---
 
+## 🧭 两份配置
+
+**不是版本关系，是分工关系。选一份用，不要叠加。**
+
+| | 🪶 `lazy.conf` | 🧭 `routing.conf` |
+|:--|:---------------|:------------------|
+| 定位 | 懒人版 | 分流版 |
+| 策略组 | 3 个 | 16 个 |
+| 规则 | 12 条 | 15 条 |
+| 出口粒度 | `Proxy` / `AI` / `AD`，全量一个出口 | 按**应用**分（ChatGPT / Claude / AI），组内再按**地区**分 |
+| 适合 | 只想通、不想调 | 想让 ChatGPT 走美国、Claude 走台湾 |
+| 导入 | `profiles/lazy.conf` | `profiles/routing.conf` |
+
+两份都带：**防 DNS 泄露结构** + **广告拦截（含白名单守卫）** + **局域网共享**。
+且 `[General]` 的 16 个 DNS 相关键**逐字相同** —— 防泄露标准不因分流粒度而变（由测试断言）。
+
+```
+1️⃣ 拿配置   →   profiles/lazy.conf  或  profiles/routing.conf
+2️⃣ 填节点   →   [Proxy] 段的占位节点
+3️⃣ 填订阅   →   仅分流版需要：Airport 组的 policy-path
+4️⃣ 导入     →   Surge
+```
+
+> 📌 分流版专有的三处设计约束（`flatten` 的对应写法 / Smart 组不能嵌套组 / 地区关键词双份）
+> 见 [`docs/11-分流版设计.md`](docs/11-分流版设计.md)。
+
+---
+
 ## 📁 文件结构
 
 ```
 surge-anti-dns-leak/
-├── 📁 profiles/            # 2 份配置（带注释 / 纯配置，内容一致）
+├── 📁 profiles/            # 4 份配置 = 2 种分工 × 2 种形态（带注释 / 纯配置）
 ├── 🖼️ icons/               # 策略组图标（已内置，不跨项目引用）
-├── 📚 docs/                # 10 篇专题（原理 / 清单 / 逐段讲解 / 审计读数 等）
+├── 📚 docs/                # 11 篇专题（原理 / 清单 / 逐段讲解 / 分流版设计 / 审计读数 等）
 ├── 📘 DetailsReadme/       # 完整技术文档
 ├── 🗓️ CHANGELOG.md         # 更新日志（按时间倒序）
-└── 🧪 skill/               # 方法论（SKILL.md + reference/）+ 3 个审计脚本 + 回归测试
+└── 🧪 skill/               # 方法论（SKILL.md + reference/）+ 4 个审计脚本 + 回归测试
 ```
 
 ---
@@ -85,7 +113,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 ## 🎯 策略组结构
 
-3 个组 / 12 条规则。组与组可以互相引用，最终都收敛到 `Proxy` 或 `DIRECT`。
+以 `lazy.conf` 为例：3 个组 / 12 条规则（`routing.conf` 是 16 组 / 15 条，见[两份配置](#-两份配置)）。组与组可以互相引用，最终都收敛到 `Proxy` 或 `DIRECT`。
 
 **✈️ 节点** —— 4 条占位节点
 
@@ -142,6 +170,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 - 🎨 [`docs/10-图标与许可.md`](docs/10-图标与许可.md) —— 图标来源 · MIT 许可 · 第三方版权
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 更新日志（按时间倒序，遵循 Keep a Changelog）
 - 📘 [`DetailsReadme/`](DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
+- 🧭 [`docs/11-分流版设计.md`](docs/11-分流版设计.md) —— 分流版：`flatten` 的对应写法 · Smart 组不能嵌套组 · 地区关键词双份
 - 📂 [`docs/`](docs/) —— 其余 8 篇专题：DNS 怎么工作 / 为什么泄露 / 加固清单 / 逐段讲解 / 审计读数 …
 - 🧪 [`skill/`](skill/) —— 3 个审计脚本、回归测试与方法论
 

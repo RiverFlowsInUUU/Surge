@@ -14,7 +14,8 @@
 #
 #   阶段 3 · 架构不变量（占位符纪律 / 两份形态 DNS 段一致性 / 规则顺序铁律）
 #   阶段 4 · 规则集内容 + 分流覆盖（需联网，SKIP_NET=1 可跳过）
-#   阶段 5 · markdown 相对链接与锚点
+#   阶段 5 · 地区组正则一致性（fixtures/bad_region_filter.conf 期望判负）
+#   阶段 6 · markdown 相对链接与锚点
 #
 # 为什么必须有"解释器与依赖"的前置检查：
 #   解释器坏掉时脚本会以**退出码 1** 结束 —— 而 bad_* 期望的恰恰也是 1。
@@ -54,7 +55,8 @@ if ! "$PY" -c "import sys" >/dev/null 2>&1; then
   printf '\n❌ 前置检查失败：解释器不可用。PY=%s\n' "$PY" >&2
   exit 2
 fi
-for _s in check_surge_dns.py audit_ruleset_content.py audit_routing_coverage.py _surge_common.py; do
+for _s in check_surge_dns.py audit_ruleset_content.py audit_routing_coverage.py \
+          audit_region_filters.py _surge_common.py; do
   if [ ! -f "$SCRIPTS/$_s" ]; then
     printf '\n❌ 前置检查失败：缺少脚本 %s/%s\n' "$SCRIPTS" "$_s" >&2
     exit 2
@@ -141,7 +143,7 @@ if [ "${SKIP_NET:-0}" != "1" ]; then
   pass4=0; fail4=0
   # ⚠️ 只对**带注释的完整版**跑联网审计：min 版是同一份配置去掉注释，
   #    跑两遍纯属浪费（且两者 DNS 段已被阶段 3 断言为逐字相同）。
-  for _p in "$PROFILES"/lazy.conf; do
+  for _p in "$PROFILES"/lazy.conf "$PROFILES"/routing.conf; do
     [ -f "$_p" ] || continue
     _name="$(basename "$_p")"
     for _s in audit_ruleset_content.py audit_routing_coverage.py; do
@@ -162,25 +164,67 @@ else
   printf '\n⏭️  阶段 4 已跳过（SKIP_NET=1）\n'
 fi
 
-# ── 阶段 5：markdown 相对链接与锚点 ────────────────────────────────────────
-# 改标题之后，引用它的所有链接会**静默失效**（GitHub 不报错，读者点 404）。
-# 锚点里含中文 / emoji / 全角标点时肉眼扫不出来 ⇒ 必须靠脚本。
-printf '\n%s\n' "阶段 5 · markdown 链接与锚点（check_links.py）"
+# ── 阶段 5：地区组正则一致性 ──────────────────────────────────────────────
+# ⚠️ 这是**本项目最容易静默退化的地方**：routing.conf 里 6 个地区组的关键词
+#    在 Other Regions 的负向断言里被逐字抄了一遍（Surge 的 filter 不支持引用变量，
+#    消灭不掉这份拷贝）。漏同步的后果是"两个组的内容不再互斥"，
+#    面板上看不出异常、Surge 也不报错 ⇒ 只能靠脚本守。
+#
+#    3 个断言：
+#      a) 真实 routing.conf 通过（关键词同步完好）
+#      b) 合成坏配置 fixtures/bad_region_filter.conf 判负（证明审计器有判别力）
+#      c) 合成坏配置必须**只**因"漏关键词"判负（防它因别的原因假绿）
+printf '\n%s\n' "阶段 5 · 地区组正则一致性（audit_region_filters.py）"
+printf '%-30s %-14s %s\n' "TARGET" "EXIT" "RESULT"
 printf '%s\n' "------------------------------------------------------------------"
-"$PY" "$HERE_W/check_links.py" "$ROOT_W" >/dev/null 2>&1
-rc5=$?
-if [ "$rc5" = "0" ]; then
-  pass5=1; fail5=0; printf '%s\n' "   ✅ 全部相对链接与锚点均可解析"
+pass5=0; fail5=0
+
+"$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing.conf" >/dev/null 2>&1
+rc=$?
+if [ "$rc" = "0" ]; then
+  res="✅ OK"; pass5=$((pass5+1))
 else
-  pass5=0; fail5=1
-  printf '%s\n' "   ❌ 有失效链接（详细输出：）"
-  "$PY" "$HERE_W/check_links.py" "$ROOT_W" 2>&1 | sed 's/^/    /'
+  res="❌ 退出码 $rc"; fail5=$((fail5+1))
+  printf '\n---- routing.conf 的详细输出 ----\n'
+  "$PY" "$SCRIPTS_W/audit_region_filters.py" "$PROFILES_W/routing.conf" 2>&1 | sed 's/^/    /'
+  printf '%s\n' "------------------------"
+fi
+printf '%-30s %-14s %s\n' "routing.conf" "exit=$rc" "$res"
+
+if [ -f "$HERE/fixtures/bad_region_filter.conf" ]; then
+  "$PY" "$SCRIPTS_W/audit_region_filters.py" "$HERE_W/fixtures/bad_region_filter.conf" >/dev/null 2>&1
+  rc=$?
+  if [ "$rc" = "1" ]; then
+    res="✅ OK（如期望判负）"; pass5=$((pass5+1))
+  else
+    res="❌ 期望 1"; fail5=$((fail5+1))
+  fi
+  printf '%-30s %-14s %s\n' "bad_region_filter.conf" "exit=$rc" "$res"
+else
+  printf '%-30s %-14s %s\n' "bad_region_filter.conf" "—" "❌ fixture 缺失"; fail5=$((fail5+1))
 fi
 printf '%s\n' "------------------------------------------------------------------"
 printf 'result: %d passed, %d failed\n' "$pass5" "$fail5"
 
-total_pass=$((pass + pass2 + pass3 + pass4 + pass5))
-total_fail=$((fail + fail2 + fail3 + fail4 + fail5))
+# ── 阶段 6：markdown 相对链接与锚点 ────────────────────────────────────────
+# 改标题之后，引用它的所有链接会**静默失效**（GitHub 不报错，读者点 404）。
+# 锚点里含中文 / emoji / 全角标点时肉眼扫不出来 ⇒ 必须靠脚本。
+printf '\n%s\n' "阶段 6 · markdown 链接与锚点（check_links.py）"
+printf '%s\n' "------------------------------------------------------------------"
+"$PY" "$HERE_W/check_links.py" "$ROOT_W" >/dev/null 2>&1
+rc6=$?
+if [ "$rc6" = "0" ]; then
+  pass6=1; fail6=0; printf '%s\n' "   ✅ 全部相对链接与锚点均可解析"
+else
+  pass6=0; fail6=1
+  printf '%s\n' "   ❌ 有失效链接（详细输出：）"
+  "$PY" "$HERE_W/check_links.py" "$ROOT_W" 2>&1 | sed 's/^/    /'
+fi
+printf '%s\n' "------------------------------------------------------------------"
+printf 'result: %d passed, %d failed\n' "$pass6" "$fail6"
+
+total_pass=$((pass + pass2 + pass3 + pass4 + pass5 + pass6))
+total_fail=$((fail + fail2 + fail3 + fail4 + fail5 + fail6))
 printf '\n%s\n' "=================================================="
 printf 'TOTAL: %d passed, %d failed\n' "$total_pass" "$total_fail"
 [ "$total_fail" = "0" ] || exit 1

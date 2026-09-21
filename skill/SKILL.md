@@ -76,12 +76,25 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | 11 | `always-real-ip` 主机名是否被前置域名规则接住 | MEDIUM / LOW |
 | 12 | 所有 IP 类规则是否带 `no-resolve`；FINAL 是否带 `dns-failed` | MEDIUM / LOW |
 
-另有三个**不在清单里但必须查**的东西（需要联网，见 `reference/checker.md`）：
+另有四个**不在清单里但必须查**的东西（见 `reference/checker.md`）：
 
-| 脚本 | 查什么 |
-|---|---|
-| `audit_ruleset_content.py` | ① 远程规则集里有没有**不带 `no-resolve` 的 IP 条目**；② 判给 DIRECT 的规则集**域名条目总量**是否够（判据是数域名条目，**不是**看规则集名字） |
-| `audit_routing_coverage.py` | 拿真实域名**走一遍** `[Rule]`，看最终命中哪条 |
+| 脚本 | 查什么 | 联网 |
+|---|---|---|
+| `audit_ruleset_content.py` | ① 远程规则集里有没有**不带 `no-resolve` 的 IP 条目**；② 判给 DIRECT 的规则集**域名条目总量**是否够（判据是数域名条目，**不是**看规则集名字） | ✅ |
+| `audit_routing_coverage.py` | 拿真实域名**走一遍** `[Rule]`，看最终命中哪条。期望表按 profile 自动切换；**不得**放宽成"只要不是 DIRECT" | ✅ |
+| `audit_region_filters.py` | 分流配置里 7 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
+
+⚠️ **分流配置（按应用 / 按地区分组）另有三条 Surge 特有的硬约束**，
+与 egern 等客户端的写法**不通用**：
+
+| 约束 | 官方依据 | 正确写法 |
+|:-----|:---------|:---------|
+| Surge **没有** `flatten` | — | 用 `include-other-group="X"`，它复制的是"resolved member policies"，语义等价 |
+| **Smart 组不能拿组名当子策略** | [Smart 智能策略组](https://kb.nssurge.com/surge-knowledge-base/zh/guidelines/smart-group) | 要 `smart` 自动选优 → `include-other-group`；要在面板点进地区 → 用 `select` + 组名作成员 |
+| `policy-regex-filter` **对显式列出的成员无效** | [Policy Including](https://manual.nssurge.com/policy-groups/policy-including.html) | 想筛 `[Proxy]` 里的本机节点，必须同时写 `include-all-proxies=true` |
+
+⚠️ 空组是允许的（正则没筛到任何节点）—— Surge **不会**因此拒绝加载，
+但指向它的规则会断流。分流配置导入后要确认哪几个组是空的。
 
 ---
 
@@ -124,12 +137,13 @@ FINAL,Proxy,dns-failed
 3. **`pre-matching` 的规则策略必须是字面量 REJECT 族**，不能是策略组。
    策略组在运行时可能解析成 DIRECT，Surge 会**拒绝加载整份配置**。
 
-### 验收判据（6 条，全过才算可用）
+### 验收判据（7 条，全过才算可用）
 
-- [ ] `check_surge_dns.py` 退出码 0（无 HIGH）
+- [ ] `check_surge_dns.py` 退出码 0（无 HIGH）—— **全部** `profiles/*.conf` 都要过
 - [ ] `audit_ruleset_content.py` 通过（远程规则集无缺 `no-resolve` 的 IP 条目；直连集合域名条目 ≥1000）
-- [ ] `audit_routing_coverage.py` 通过（国内探针全部 DIRECT、境外探针不落 DIRECT、误杀探针不被 REJECT）
-- [ ] `architecture.sh` 通过（占位符纪律 / 版本一致性 / 规则顺序）
+- [ ] `audit_routing_coverage.py` 通过（国内探针全部 DIRECT、境外探针**命中预期的组**、误杀探针不被 REJECT）
+- [ ] `audit_region_filters.py` 通过（仅分流配置：关键词同步 / 互斥 / 类型 smart）
+- [ ] `architecture.sh` 通过（占位符纪律 / 订阅 token 纪律 / 两组形态 DNS 段一致性 / 规则顺序）
 - [ ] 手工实测：抓包确认冷启动无明文 `:53`
 - [ ] 手工实测：游戏机 / NAT 检测 / 时间同步正常（`always-real-ip` 生效）
 

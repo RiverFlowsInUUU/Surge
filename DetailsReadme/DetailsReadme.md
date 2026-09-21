@@ -31,9 +31,11 @@
 surge-anti-dns-leak/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
-│   └── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
+│   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
+│   ├── routing.conf     # 分流配置（带注释）—— 改这份
+│   └── routing.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
-├── docs/                # 01–10 专题
+├── docs/                # 01–11 专题
 ├── DetailsReadme/       # 本文件
 ├── CHANGELOG.md
 ├── LICENSE
@@ -41,9 +43,14 @@ surge-anti-dns-leak/
     ├── SKILL.md                  # 方法论
     ├── README.md                 # 脚本用法
     ├── reference/                # 逐条判据
-    ├── scripts/                  # 3 个审计脚本 + 1 个共享模块
-    └── tests/                    # 5 阶段回归 + 3 个 fixture + 链接检查
+    ├── scripts/                  # 4 个审计脚本 + 1 个共享模块
+    └── tests/                    # 6 阶段回归 + 4 个 fixture + 链接检查
 ```
+
+**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 12 条，全量一个出口），
+`routing` 是分流版（16 组 / 15 条，按应用 + 按地区）。选一份用，不要叠加。
+分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
+[`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
 
 ### 1.1 为什么每份配置有两份形态
 
@@ -782,18 +789,29 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 见 §13.3。`AD` 组是**独立的手动开关**，不被规则引用是刻意的分层设计。
 
-### 16.5 两份形态必须同步
+### 16.5 形态与配置之间的一致性
 
-[`profiles/lazy.conf`](../profiles/lazy.conf)（带注释）与
-[`profiles/lazy.min.conf`](../profiles/lazy.min.conf)（纯配置）**内容一致，只差注释**。
+架构检查断言三条：
 
-改配置时两份都要动 —— 阶段 3 的架构检查会断言它们的 **16 个 DNS 相关键逐字相同**，
-只改一份会被拦下。
+| 断言 | 比对对象 | 理由 |
+|:-----|:---------|:-----|
+| ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
+| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
 
-### 16.6 兜底指 `Proxy` 而非国内组
+比对的是两边共有的 **16 个 DNS 相关键**，逐字相同。改配置时两份都要动，只改一份会被拦下。
 
-本模板不做「分流兜底的境内 / 境外切分」—— 兜底一律 `Proxy`。
-国内直连靠 `direct.txt` + `GEOIP,CN` 正面覆盖，不靠兜底。
+⚠️ ②-c 是本项目**唯一一条跨配置**的断言。它挡的是「反正这是分流版，DNS 段差不多就行」
+这种想法 —— 两份配置允许出现的差异**只在** `[Proxy Group]` 与 `[Rule]` 的粒度上。
+
+### 16.6 兜底：lazy 指 `Proxy`，routing 指 `Final` 组
+
+`lazy.conf` 的 `FINAL,Proxy,dns-failed` **直接**指 `Proxy` 组。
+`routing.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
+还能改兜底去向，代价是零。
+
+两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
+正面覆盖，不靠兜底。
 
 ---
 
@@ -842,8 +860,10 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 
 ### 18.1 改动前必须知道的三条
 
-1. **DNS 段不许只改一份。** `lazy.conf` / `lazy.min.conf` 的 16 个 DNS 键由测试逐字比对。
-   要改就两份一起改。
+1. **DNS 段不许只改一份，也不许只改一个配置。** 三组比对（`lazy` 两形态 / `routing` 两形态 /
+   `lazy` ↔ `routing`）共 16 个键由测试逐字比对。要改就**四份一起改**。
+   ⚠️ 注意 `routing.min.conf` 是从 `routing.conf` 生成的，生成脚本会丢掉注释 ——
+   新加 `# audit-waive:` 行后要**手动补回 min 版**，否则审计器会对 min 版报 HIGH。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
 

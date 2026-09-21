@@ -14,6 +14,10 @@
 #        min 版的定位是"去掉注释"，不是"裁剪配置"，DNS 段被改动即是缺陷。
 #     ③ 规则顺序铁律：每个 profile 里，白名单 → REJECT → 域名类直连 → IP 类 → FINAL。
 #
+#   ②的目标是**两组**文件：lazy / lazy.min 与 routing / routing.min。
+#   两组共用同一份 DNS 段定义（见 DNS_KEYS），是刻意的：
+#   防泄露结构不该因为"这份配置是分流版"就降级。
+#
 # 退出码：0 = 通过；1 = 有违规；2 = 环境问题（文件缺失 / python 不可用）。
 #
 # 用法：
@@ -66,6 +70,7 @@ DOC_NETS = ("192.0.2.", "198.51.100.", "203.0.113.")
 # 允许出现在模板里的域名（占位域名 + 公开规则集/测试端点域名）
 ALLOWED_DOMAINS = (
     "example.com", "example.net", "example.org",
+    "sub.example.com",                 # 订阅 URL 的占位域名（routing.conf）
     "cdn-relay.example.com",
     "connect.rom.miui.com",            # 连通性测试端点
     "www.gstatic.com",                 # TCP 测速端点（性能探针，刻意境外）
@@ -76,6 +81,7 @@ ALLOWED_DOMAINS = (
     "apple.com",                       # proxy-test-udp 的探针
     "surge-anti-dns-leak",             # README / 图标路径里的仓库名
     "jinx-ads-rules", "ACL4SSR", "Loyalsoldier", "adysec",  # 上游仓库名
+    "blackmatrix7",                    # 上游规则集仓库名
     "nintendo.net", "playstation.net", "xboxlive.com",      # 规则匹配值
     "pool.ntp.org", "market.xiaomi.com", "home.arpa",
 )
@@ -85,6 +91,11 @@ FORBIDDEN_SUBSTRINGS = [
     "tange365.com",         # 源配置里提到的私有业务域
     "wangxinyu",            # 个人信息残留的常见形态
 ]
+
+# ⚠️ 订阅 token 纪律：`policy-path=` 里的 URL **只能有占位 token**。
+#    真实 token 一旦公开 = 别人能刷你的机场流量，是本仓库最严重的一类泄露。
+#    判据：URL 里若出现 `token=` / `key=` / `sub=` 参数，其值必须含 REPLACE_WITH。
+TOKEN_RE = re.compile(r"(?:token|key|sub)\s*=\s*([A-Za-z0-9_\-]{6,})", re.I)
 _IPV4 = re.compile(r"\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b")
 
 def strip_c(s):
@@ -132,6 +143,14 @@ for f in files:
             continue
         fails.append(f"{f}: sni 的值不是占位符（`{val}`）")
 
+    # ①-c2 订阅 token / key 必须占位符化（最严重的一类泄露：泄露即被盗刷流量）
+    for m in TOKEN_RE.finditer(raw_text):
+        val = m.group(1)
+        if "REPLACE_WITH" in val.upper():
+            continue
+        fails.append(f"{f}: 订阅 URL 里出现疑似真实 token（`{val[:8]}…`）—— "
+                     f"必须写成 REPLACE_WITH_YOUR_TOKEN")
+
     # ①-d 节点行里的主机名必须落在允许清单（只看有效行）
     in_proxy = False
     for i, line in enumerate(text.splitlines(), 1):
@@ -174,25 +193,46 @@ def dns_kv(path):
             d[k.strip()] = v.strip()
     return d
 
-full_p, min_p = os.path.join(profiles_dir, "lazy.conf"), \
-                os.path.join(profiles_dir, "lazy.min.conf")
-if os.path.isfile(full_p) and os.path.isfile(min_p):
+# ⚠️ 两组形态，各查一遍。routing 与 lazy 的 DNS 段**必须逐字相同** ——
+#    "这份配置是分流版"不构成降低防泄露标准的理由。
+for _stem in ("lazy", "routing"):
+    full_p = os.path.join(profiles_dir, f"{_stem}.conf")
+    min_p = os.path.join(profiles_dir, f"{_stem}.min.conf")
+    if not (os.path.isfile(full_p) and os.path.isfile(min_p)):
+        fails.append(f"找不到 {_stem}.conf 或 {_stem}.min.conf —— 两份形态必须同时存在")
+        continue
     a, b = dns_kv(full_p), dns_kv(min_p)
+    bad = False
     for k in DNS_KEYS:
         if k not in a or k not in b:
             # min 版与完整版都应含全部 DNS 键；缺一个就说明有人漏抄
             if k in a or k in b:
                 fails.append(f"DNS 段不一致：`{k}` 只在 "
-                             f"{'lazy.conf' if k in a else 'lazy.min.conf'} 里存在")
+                             f"{_stem + '.conf' if k in a else _stem + '.min.conf'} 里存在")
+                bad = True
             continue
         if a[k] != b[k]:
             fails.append(f"DNS 段不一致：`{k}` 的值不同\n"
-                         f"        lazy.conf:     {a[k]}\n"
-                         f"        lazy.min.conf: {b[k]}")
-    if not any("DNS 段不一致" in x for x in fails):
-        oks.append(f"lazy.conf / lazy.min.conf 的 {len(DNS_KEYS)} 个 DNS 相关键逐字相同")
-else:
-    fails.append("找不到 lazy.conf 或 lazy.min.conf —— 两份形态必须同时存在")
+                         f"        {_stem}.conf:     {a[k]}\n"
+                         f"        {_stem}.min.conf: {b[k]}")
+            bad = True
+    if not bad:
+        oks.append(f"{_stem}.conf / {_stem}.min.conf 的 {len(DNS_KEYS)} 个 DNS 相关键逐字相同")
+
+# ②-b 跨形态：routing 与 lazy 的 DNS 段也必须相同（防泄露结构不因分流粒度而变）
+_lf = os.path.join(profiles_dir, "lazy.conf")
+_rf = os.path.join(profiles_dir, "routing.conf")
+if os.path.isfile(_lf) and os.path.isfile(_rf):
+    a, b = dns_kv(_lf), dns_kv(_rf)
+    diff = [k for k in DNS_KEYS if a.get(k) != b.get(k)]
+    if diff:
+        for k in diff:
+            fails.append(f"lazy 与 routing 的 DNS 段不一致：`{k}`\n"
+                         f"        lazy.conf:    {a.get(k)}\n"
+                         f"        routing.conf: {b.get(k)}")
+    else:
+        oks.append(f"lazy.conf 与 routing.conf 的 {len(DNS_KEYS)} 个 DNS 键也逐字相同"
+                   f"（防泄露结构不因分流粒度而变）")
 
 # ── ③ 规则顺序铁律 ──────────────────────────────────────────────────────────
 def rules_of(path):

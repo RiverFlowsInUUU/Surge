@@ -20,16 +20,18 @@ Agent 会自动加载。
 | `reference/hardening-template.md` | 加固模板逐段完整版（含逐行理由） |
 | `reference/pitfalls.md` | **已踩过的坑** —— 事故复盘全文 |
 | `reference/leak-localization.md` | 定位「泄露到运营商」的网络侧实测流程 |
-| `reference/checker.md` | 三个审计脚本的命令 + 12 项判据 + 判据演进史 |
+| `reference/checker.md` | 四个审计脚本的命令 + 12 项判据 + 判据演进史 |
 | `reference/ruleset-weight.md` | 规则集"重量"：按类型数条目 / 识破名字骗人 |
 | `reference/public-repo.md` | 公开模板仓库的交付物清单与维护方式 |
 | `scripts/check_surge_dns.py` | **profile 层审计**（清单 1–12）。端点是 IP 字面量吗、`dns-server` 是不是 `system`、IP 规则带 `no-resolve` 吗、策略名能解析吗、`pre-matching` 是不是字面量、规则顺序对不对（端点项为提示性 LOW，见坑 14） |
 | `scripts/audit_ruleset_content.py` | **规则集层审计**（远程内容）。下载全部被引用的远程规则集，数「缺 `no-resolve` 的 IP 条目」与「直连集合的域名条目总量」 |
-| `scripts/audit_routing_coverage.py` | **分流覆盖审计**。域名 → 命中规则 → 策略；17 个国内探针（**刻意混入非 `.cn`**）+ 8 个境外探针 + 8 个误杀探针 |
+| `scripts/audit_routing_coverage.py` | **分流覆盖审计**。域名 → 命中规则 → 策略；17 个国内探针（**刻意混入非 `.cn`**）+ 8 个境外探针 + 8 个误杀探针。境外探针的期望表**按 profile 自动切换**（分流版精确到应用组名），且**不放宽成「只要不是 DIRECT」**——那会让整片走兜底的坏配置假通过 |
+| `scripts/audit_region_filters.py` | **地区组正则一致性审计**。7 个地区组的 `policy-regex-filter` 关键词是否同步、是否互斥、类型是否 `smart`。守的是「`Other Regions` 负向断言里那份逐字抄来的关键词拷贝」 |
 | `scripts/_surge_common.py` | 共享逻辑（INI 解析 / 端点判据 / `policy_index`），**所有脚本从这里 import** |
-| `tests/run.sh` | 5 阶段回归，9 个断言 |
-| `tests/architecture.sh` | 三条项目不变量（占位符纪律 / 两份形态 DNS 段一致性 / 规则顺序铁律） |
+| `tests/run.sh` | 6 阶段回归，15 个断言 |
+| `tests/architecture.sh` | 项目不变量（占位符纪律 / 订阅 token 纪律 / 两组形态 DNS 段一致性 / lazy↔routing DNS 段一致性 / 规则顺序铁律） |
 | `tests/*.conf` | 3 个 fixture（1 个期望通过 + 2 个**期望判负**） |
+| `tests/fixtures/bad_region_filter.conf` | 第 4 个 fixture，**期望判负**：刻意让 Hong Kong 组的关键词与 `Other Regions` 不同步 |
 
 > 📐 **为什么拆**：Anthropic 官方 skill 撰写规范要求 `SKILL.md` 正文 **< 500 行**
 > （原文：*Keep SKILL.md body under 500 lines for optimal performance. If your content exceeds
@@ -55,9 +57,13 @@ python "$S/audit_ruleset_content.py"    profiles/lazy.conf   # 期望通过（�
 python "$S/audit_ruleset_content.py"    profiles/lazy.conf --show-domestic
 
 python "$S/audit_routing_coverage.py"   profiles/lazy.conf   # 期望 33/33（需联网）
+python "$S/audit_routing_coverage.py"   profiles/routing.conf # 分流版（期望表自动切换）
 python "$S/audit_routing_coverage.py"   profiles/lazy.conf --show-all
 
-bash ./skill/tests/run.sh                                  # 5 阶段，9 断言
+python "$S/audit_region_filters.py"     profiles/routing.conf  # 期望 9/9（不需联网）
+python "$S/audit_region_filters.py"     profiles/routing.conf -v
+
+bash ./skill/tests/run.sh                                  # 6 阶段，15 断言
 SKIP_NET=1 bash ./skill/tests/run.sh                       # 跳过联网阶段 4
 ```
 
@@ -71,18 +77,22 @@ SKIP_NET=1 bash ./skill/tests/run.sh                       # 跳过联网阶段 
 > 少一个对外暴露的面就少一份事。
 > 全部验证用上面的本地命令即可完整复现，功能上没有任何损失。
 
-### `tests/run.sh` 的五个阶段
+### `tests/run.sh` 的六个阶段
 
 | 阶段 | 断言对象 | 断言数 | 需要联网 |
 |:----:|:---------|:------:|:--------:|
-| 1 | 3 个 fixture × `check_surge_dns.py` | 3 | ❌ |
+| 1 | 3 个 DNS 面 fixture × `check_surge_dns.py` | 3 | ❌ |
 | 2 | 4 份 `profiles/*.conf` × `check_surge_dns.py` | 4 | ❌ |
 | 3 | `architecture.sh`（架构不变量） | 1 | ❌ |
 | 4 | 2 份 profile × 2 个联网审计脚本 | 4 | ✅ |
-| 5 | `check_links.py`（markdown 链接与锚点） | 1 | ❌ |
+| 5 | 地区组正则一致性（真实 + 1 个判负 fixture） | 2 | ❌ |
+| 6 | `check_links.py`（markdown 链接与锚点） | 1 | ❌ |
 
-> ⚠️ **阶段 1 里有两个"期望判负"的 fixture**（`bad_bootstrap` / `bad_order_and_policy`）。
+> ⚠️ **阶段 1 与阶段 5 里有三个"期望判负"的 fixture**
+> （`bad_bootstrap` / `bad_order_and_policy` / `fixtures/bad_region_filter`）。
 > 它们的存在是为了证明审计器**真的有判别力**，而不是恒返回 0。
+> `bad_region_filter` 尤其重要：它刻意让 Hong Kong 组多一个关键词、而 `Other Regions`
+> 不同步 —— 这种退化**不报错、面板上也看不出**，只能靠脚本发现。
 >
 > ⚠️ 也因此，`run.sh` 一开始就有「解释器与依赖」的前置检查：解释器坏掉时脚本会以
 > **退出码 1** 结束 —— 而那正是 `bad_*` 期望的值，会被误判成"通过"。

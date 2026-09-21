@@ -52,6 +52,17 @@ DOMESTIC_PROBES = [
 ]
 
 # 境外探针：期望走代理（不落到 DIRECT）。allow = 允许命中的策略名集合。
+#
+# ⚠️ 为什么这里要按 profile 分两套期望，而不是放宽成"只要不是 DIRECT 就行"：
+#    "不是 DIRECT" 会让一个**整片走兜底**的坏配置假通过 —— 而"整片走兜底"
+#    恰恰是 Egern 项目实测踩过的那个坑（国内域名全落到 Final → 代理）。
+#    期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
+#
+#    两套期望的差别只在于组名：lazy.conf 只有一个 AI 组，
+#    routing.conf 把它拆成了 ChatGPT / Claude / AI 三个组。
+#    ⚠️ 这不是"顺手放宽"—— 它是**分流版新增能力**的验收条件：
+#       chat.openai.com 必须落进 ChatGPT，而不只是"随便落进某个代理组"。
+#       如果只看"不是 DIRECT"，把三个组全指向 Proxy 也能假过。
 FOREIGN_PROBES = {
     "chat.openai.com": {"AI", "PROXY"},
     "api.anthropic.com": {"AI", "PROXY"},
@@ -62,6 +73,40 @@ FOREIGN_PROBES = {
     "t.me": {"PROXY"},
     "x.com": {"PROXY"},
 }
+
+# 分流版（routing.conf）—— 精确到应用组名。
+FOREIGN_PROBES_ROUTING = {
+    "chat.openai.com": {"CHATGPT"},
+    "api.anthropic.com": {"CLAUDE"},
+    "gemini.google.com": {"AI"},       # Gemini 在本版归 AI 组（未单列 Gemini 组）
+    "github.com": {"FINAL"},            # 本版未单列 GitHub 组，落兜底（组名 Final）
+    "www.google.com": {"FINAL"},
+    "www.youtube.com": {"FINAL"},
+    "t.me": {"FINAL"},
+    "x.com": {"FINAL"},
+}
+
+
+def foreign_expectations(path):
+    """按 profile 选择境外探针的期望表。
+
+    判据是**文件里实际定义了哪些组**，不是文件名 ——
+    这样即使有人把分流版改名，期望仍然正确。
+    """
+    try:
+        text = open(path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return FOREIGN_PROBES
+    sections, _ = parse_conf(path)
+    names = set()
+    for _ln, raw in sections.get("proxy group", []):
+        s = strip_comment(raw)
+        if s and "=" in s:
+            names.add(s.split("=", 1)[0].strip().upper())
+    # 分流版的标志：存在 ChatGPT / Claude 这类应用级组
+    if {"CHATGPT", "CLAUDE"} & names:
+        return FOREIGN_PROBES_ROUTING
+    return FOREIGN_PROBES
 
 # ⭐ 误杀探针：这些域名**一定不能**被广告规则拦。
 #    它们几乎必然出现在广告黑名单的误杀面里（Egern 项目的 jinx-surge-white-guard
@@ -219,9 +264,10 @@ def main():
     print(f"   {ok_dom}/{len(DOMESTIC_PROBES)} 命中 DIRECT\n")
 
     # ── B. 境外探针不能落 DIRECT ────────────────────────────────────────────
-    print("── B · 境外探针（期望走代理 / AI 组，不能落 DIRECT）")
+    expectations = foreign_expectations(a.profile)
+    print("── B · 境外探针（期望走对应应用组 / 代理组，不能落 DIRECT）")
     ok_for = 0
-    for d, allow in FOREIGN_PROBES.items():
+    for d, allow in expectations.items():
         r = m.match(d)
         pol = r["policy"] if r else "（无规则命中）"
         if pol.strip().upper() in allow:
@@ -231,7 +277,7 @@ def main():
         else:
             fails.append((d, pol, r))
             print(f"   ❌ {d:<32} → {pol}（期望 {sorted(allow)}）")
-    print(f"   {ok_for}/{len(FOREIGN_PROBES)} 符合预期\n")
+    print(f"   {ok_for}/{len(expectations)} 符合预期\n")
 
     # ── C. 误杀探针不能被广告规则拦 ─────────────────────────────────────────
     print("── C · 误杀探针（绝不能命中 REJECT）")
@@ -249,7 +295,7 @@ def main():
     print(f"   {ok_fp}/{len(FALSE_POSITIVE_PROBES)} 未被误杀\n")
 
     print("─" * 62)
-    total = len(DOMESTIC_PROBES) + len(FOREIGN_PROBES) + len(FALSE_POSITIVE_PROBES)
+    total = len(DOMESTIC_PROBES) + len(expectations) + len(FALSE_POSITIVE_PROBES)
     print(f"result: {total - len(fails)} passed, {len(fails)} failed")
     if fails:
         print("❌ 未通过")

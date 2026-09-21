@@ -41,19 +41,25 @@ S=./skill/scripts
 python "$S/check_surge_dns.py"  profiles/lazy.conf              # 期望 exit 0
 python "$S/check_surge_dns.py"  profiles/lazy.conf --strict      # medium 也算失败
 python "$S/check_surge_dns.py"  profiles/lazy.conf --quiet       # 只打印计数
+python "$S/audit_region_filters.py" profiles/routing.conf       # 期望 9/9
+python "$S/audit_region_filters.py" profiles/routing.conf -v    # 逐个组的关键词数
 bash   ./skill/tests/architecture.sh                           # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
 python "$S/audit_ruleset_content.py"  profiles/lazy.conf         # 期望 exit 0
 python "$S/audit_ruleset_content.py"  profiles/lazy.conf --show-domestic --force
 python "$S/audit_routing_coverage.py" profiles/lazy.conf         # 期望 33/33
+python "$S/audit_routing_coverage.py" profiles/routing.conf      # 期望 33/33（期望表自动切换）
 python "$S/audit_routing_coverage.py" profiles/lazy.conf --show-all
 
-# ── 回归测试（5 阶段，9 断言）─────────────────────────────────────
+# ── 回归测试（6 阶段，15 断言）─────────────────────────────────────
 bash ./skill/tests/run.sh
 SKIP_NET=1 bash ./skill/tests/run.sh
 PY=/path/to/python bash ./skill/tests/run.sh
 ```
+
+⚠️ **四份 profile 都要过 `check_surge_dns.py`**（阶段 2 会自动遍历 `profiles/*.conf`）。
+分流版同样要求 `0 high / 0 medium`，标准与 `lazy.conf` 一致。
 
 规则集缓存目录：
 
@@ -251,6 +257,28 @@ FOREIGN_PROBES = {
 ⚠️ AI 类域名允许落 `AI` 或 `PROXY` —— 用户可能按需删掉 `AI` 组
 （AI 流量合流进 `Proxy`）。判据要对"删了 `AI` 组"的配置也成立。
 
+**分流版用另一套期望表**（`FOREIGN_PROBES_ROUTING`），精确到应用组名：
+
+| 探针 | `lazy.conf` 期望 | `routing.conf` 期望 |
+|:-----|:-----------------|:--------------------|
+| `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
+| `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
+| `gemini.google.com` | `AI` / `PROXY` | `AI` |
+| 其余 5 个 | `PROXY` | `FINAL` |
+
+选择哪套表由 `foreign_expectations()` 判定，**判据是「文件里实际定义了哪些组」**
+（存在 `ChatGPT` / `Claude` 组即为分流版），**不是文件名** ——
+所以把分流版改名也不会让期望失配。
+
+⚠️⚠️ **绝不能把判据放宽成「只要不是 DIRECT 就行」。**
+那样"整片走兜底"的坏配置会**假通过** —— 而"整片走兜底"恰恰是 Egern 项目实测踩过的坑
+（国内域名全落到 `Final → 代理`，两个审计脚本双双通过）。
+期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
+
+⚠️ 分流版里 `github.com` / `google.com` / `youtube.com` 等期望落 `FINAL`：
+本版只做了 3 个应用组，未单列 GitHub / Google / YouTube 组，落兜底是**正确行为**。
+将来补上这些组时，本表要同步加行。
+
 ### C 的意义
 
 `github.com` / `jsdelivr.net` / `icloud.com` 这类高频域几乎必然出现在
@@ -286,9 +314,9 @@ FOREIGN_PROBES = {
 ⚠️ IPv4 判据只扫**有效行**（`strip_c()` 剥掉整行注释与行尾注释）——
 注释里出现私有网段是说明性文字，不是泄露。见 [`pitfalls.md`](pitfalls.md) 坑 8。
 
-### ② DNS 段一致性
+### ② DNS 段一致性（两组，共 3 条断言）
 
-16 个键逐字比对 `lazy.conf` 与 `lazy.min.conf`：
+16 个键逐字比对：
 
 ```python
 DNS_KEYS = [
@@ -301,9 +329,22 @@ DNS_KEYS = [
 ]
 ```
 
+| 断言 | 比对对象 | 理由 |
+|:-----|:---------|:-----|
+| ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
+| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
+
 任一键只在一边存在、或值不同 → 失败。
 
-**理由**：`.min.conf` 的定位是「去掉注释」，不是「裁剪配置」。DNS 段被改动即是缺陷。
+⚠️ ②-c 是这份测试里**唯一一条跨配置**的断言。它挡的是这种想法：
+"反正这是分流版，DNS 段差不多就行"。两份配置的防泄露结构必须**完全相同** ——
+差别只允许出现在 `[Proxy Group]` 与 `[Rule]` 的粒度上。
+
+⚠️ 改 `DNS_KEYS` 时注意：它同时是 ②-a / ②-b / ②-c 的依据，
+且 `routing.min.conf` 是用脚本从 `routing.conf` 生成的 —— 生成脚本会**丢掉注释**，
+所以 profile 里的 `# audit-waive:` 行必须**手动补回 min 版**（否则豁免失效、
+审计器会对 min 版报 HIGH）。这是踩过的坑，见 § 退出码约定上方的说明。
 
 ### ③ 规则顺序铁律
 
@@ -338,6 +379,12 @@ DNS_KEYS = [
 | v1 | 架构检查扫全文找 IPv4 | 初版 |
 | v2 | 加 `strip_c()`，只扫有效行 | 注释里的 `10.0.0.0/8` 被误报，见坑 8 |
 | v1 | 架构检查断言「DIRECT 不在 REJECT 之前」 | 初版 |
+| v1 | ② 只比对 `lazy.conf` ↔ `lazy.min.conf` | 单配置时代 |
+| v2 | ② 扩为**两组 + 跨组**（共 3 条）：新增 `routing` 对与 `lazy↔routing` 对 | 引入分流版后，"防泄露标准不因分流粒度而变"需要被断言 |
+| v1 | 分流覆盖的境外期望只有一套（`AI` / `PROXY`） | 单配置时代 |
+| v2 | 按 profile **自动切换**期望表，分流版精确到应用组名 | 分流版需验证"按应用分流真的接住了"，且**不得**放宽成"只要不是 DIRECT" |
+| v1 | — | 未来 |
+| **新** | `audit_region_filters.py`（地区组正则一致性） | 负向断言里的关键词拷贝漏同步 = 静默退化，见坑 16 |
 | v2 | 拆成 ③-b (i)(ii) 两条独立约束 | 不变量本身写错了，见坑 9 |
 | v1 | ③-b 对「精简配置」也生效 | 初版 |
 | v2 | 对精简配置豁免 + 打印说明行 | 曾要求极简版改名成完整版，见坑 10 |
