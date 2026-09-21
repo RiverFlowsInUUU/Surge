@@ -18,38 +18,24 @@
 
 ## 📥 复制链接
 
-<table>
-  <tr>
-    <th align="center" width="50%">🪶&nbsp; 懒人版<br><sub>一个出口，不想调</sub></th>
-    <th align="center" width="50%">🧭&nbsp; 分流版<br><sub>按应用 + 地区分</sub></th>
-  </tr>
-  <tr>
-    <td align="center">
-      <sub>带注释 · 推荐先读</sub><br>
-      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.conf</code>
-    </td>
-    <td align="center">
-      <sub>带注释 · 推荐先读</sub><br>
-      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.conf</code>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <sub>纯配置 · 体积小</sub><br>
-      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.min.conf</code>
-    </td>
-    <td align="center">
-      <sub>纯配置 · 体积小</sub><br>
-      <code>https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.min.conf</code>
-    </td>
-  </tr>
-</table>
+🪶 **懒人版** —— 一个出口，不想调
 
-**怎么用**：复制上面任意一条链接 → Surge 里 **配置 → 从 URL 下载** → 粘贴 → 导入。
-两个版本**选一个用，不要叠加**。
+```
+https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.min.conf
+```
 
-> 💡 `.conf` 与 `.min.conf` **内容完全一致**，只差注释。想读懂配置选前者，想省体积选后者。
-> ⚠️ 两种形态的链接都指向 `main` 分支，我会持续更新 —— 想锁定某天的版本请自行 fork。
+🧭 **分流版** —— 按应用 + 按地区
+
+```
+https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.min.conf
+```
+
+**怎么用**：鼠标移到上面灰框的右上角，点 **复制图标** → Surge 里
+**配置 → 从 URL 下载** → 粘贴 → 导入。两个版本**选一个用，不要叠加**。
+
+> 💡 这两条是**纯配置版**，导入即用。想读带注释的版本（同样内容 + 大段注释）：
+> [🐈 `lazy.conf`](profiles/lazy.conf) · [🐈 `routing.conf`](profiles/routing.conf)
+> ⚠️ 链接都指向 `main` 分支，我会持续更新 —— 想锁定某天的版本请自行 fork。
 
 ---
 
@@ -58,18 +44,18 @@
 先选一份配置（两版的区别见[两份配置](#-两份配置)）：
 
 ```
-🪶 懒人版                         🧭 分流版
-1️⃣ 拿配置  profiles/lazy.conf     1️⃣ 拿配置  profiles/routing.conf
-2️⃣ 填节点  [Proxy] 的 4 条占位     2️⃣ 填节点  [Proxy] 的 7 条占位
-3️⃣ 填充值  如有的话                3️⃣ 填订阅  Airport 组的 policy-path
-4️⃣ 导入    Surge                  4️⃣ 填充值  如有的话
-                                   5️⃣ 导入    Surge
+🪶 懒人版                           🧭 分流版
+1️⃣ 拿配置  上面复制链接的第 1 条     1️⃣ 拿配置  上面复制链接的第 2 条
+2️⃣ 填节点  [Proxy] 的 4 条占位       2️⃣ 填节点  [Proxy] 的 7 条占位
+3️⃣ 填充值  如有的话                  3️⃣ 填订阅  Airport 组的 policy-path
+4️⃣ 导入    Surge                    4️⃣ 填充值  如有的话
+                                    5️⃣ 导入    Surge
 ```
 
 **要填什么**
 
-| 位置 | 🪶 `lazy.conf` | 🧭 `routing.conf` | 必填 |
-|:-----|:---------------|:------------------|:----:|
+| 位置 | 🪶 懒人版 | 🧭 分流版 | 必填 |
+|:-----|:----------|:----------|:----:|
 | `[Proxy]` 节点 | 4 条（`203.0.113.x` + `REPLACE_WITH_*`） | 7 条，**节点名带地区关键词** | ✅ |
 | `[Proxy Group]` 组成员 | `"Node-A"` … | 自动从节点名筛出，通常不用改 | ✅ |
 | 订阅槽位 | — | `Airport` 组 `policy-path` 的 `REPLACE_WITH_YOUR_TOKEN` | ⬜ 可选 |
@@ -79,9 +65,11 @@
 > 因为地区组是用正则按**节点名**筛的。改名规则见 [`docs/11` §4](docs/11-分流版设计.md)。
 > 不填订阅槽位也能用 —— 那份组会自动留空，只跑你自己手写的节点。
 
-填完节点即可导入，无需其他改动。
+**从 URL 导入时，节点要自己填**（下载到的文件里是占位符）。
+想先在本地改好再导入？用带注释的 [`lazy.conf`](profiles/lazy.conf) / [`routing.conf`](profiles/routing.conf)，
+两者与上面的 `.min.conf` **内容完全一致**，只多注释。
 
-📄 **两份形态**：每份配置都有 `.conf`（带注释）与 `.min.conf`（纯配置）两种形态，内容一致，只差注释，取用其一即可。
+📄 **两份形态**：每份配置都有 `.conf`（带注释）与 `.min.conf`（纯配置），内容一致，只差注释，取用其一即可。
 
 ---
 
@@ -89,20 +77,19 @@
 
 **不是版本关系，是分工关系。选一份用，不要叠加。**
 
-| | 🪶 `lazy.conf` | 🧭 `routing.conf` |
-|:--|:---------------|:------------------|
-| 定位 | 懒人版 | 分流版 |
+| | 🪶 懒人版 | 🧭 分流版 |
+|:--|:----------|:----------|
+| 文件 | `lazy.conf` / `lazy.min.conf` | `routing.conf` / `routing.min.conf` |
 | 策略组 | 3 个 | 26 个 |
 | 规则 | 13 条 | 26 条 |
 | 出口粒度 | `Proxy` / `AI` / `AD`，全量一个出口 | 按**应用**分（ChatGPT / Google / GitHub … 共 14 组），组内再按**地区**分 |
 | 适合 | 只想通、不想调 | 想让 ChatGPT 走美国、Claude 走台湾 |
-| 导入 | `profiles/lazy.conf` | `profiles/routing.conf` |
 
 两份都带：**防 DNS 泄露结构** + **广告拦截（含白名单守卫）** + **局域网共享**。
 且 `[General]` 的 16 个 DNS 相关键**逐字相同** —— 防泄露标准不因分流粒度而变（由测试断言）。
 
 ```
-1️⃣ 拿配置   →   profiles/lazy.conf  或  profiles/routing.conf
+1️⃣ 拿配置   →   复制链接的第 1 条（懒人）或 第 2 条（分流）
 2️⃣ 填节点   →   [Proxy] 段的占位节点
 3️⃣ 填订阅   →   仅分流版需要：Airport 组的 policy-path
 4️⃣ 导入     →   Surge
