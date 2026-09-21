@@ -8,13 +8,13 @@
 
 ```
 surge-anti-dns-leak/
-├── README.md                    # 门面：快速开始 / 文件结构 / 两个版本 / 原理 / 组结构 / 规则顺序 / 来源
+├── README.md                    # 门面：快速开始 / 文件结构 / 原理 / 组结构 / 规则顺序 / 来源
 ├── CHANGELOG.md                 # 更新日志（Keep a Changelog，时间倒序）
 ├── LICENSE                      # MIT
 ├── .gitignore
-├── profiles/                    # 4 份配置
-│   ├── v1.conf / v1.min.conf    # 完整版
-│   └── v0.conf / v0.min.conf    # 极简版
+├── profiles/                    # 2 份配置（带注释 / 纯配置，内容一致）
+│   ├── lazy.conf                # 带注释 —— 改这份
+│   └── lazy.min.conf            # 纯配置 —— 导入用
 ├── icons/                       # 26 个 PNG（本地，不跨项目引用）
 ├── docs/                        # 01–10 专题
 ├── DetailsReadme/
@@ -56,7 +56,7 @@ GitHub 上**表格宽度不可控**（`.markdown-body table` 是
 | 场景 | 用 |
 |:-----|:---|
 | 功能清单 / 特性列表 / 步骤 | 列表 |
-| 两三个短值的对照（`v0` vs `v1`） | 表格 |
+| 两三个短值的对照（如某配置项 vs 默认值） | 表格 |
 | 逐条规则清单（长文本） | 列表 |
 
 ⚠️ 长文本列**左对齐**（居中长文本换行后参差不齐），短枚举列居中。
@@ -93,25 +93,27 @@ GitHub 上**表格宽度不可控**（`.markdown-body table` 是
 
 ---
 
-## 3 · 版本组织
+## 3 · 文件组织
 
-### 3.1 为什么是 `v0` / `v1` 而不是语义化版本
+### 3.1 不设版本号
 
-这是**模板**不是软件。使用者关心的是「哪一版的结构」，不是「补丁号」。
-两个版本**长期并存，都维护**。
+这是**模板**不是软件。使用者关心的是「结构是什么样」，不是「补丁号」。
+需要更轻的配置就在 `lazy.conf` 上**直接删**，不另开版本 ——
+理由见 [`docs/07`](../../docs/07-文件版本沿革.md) §3.2（同一件事写在两个地方，
+早晚会只改一处）。
 
-`v1` 是**推荐版**，不是"新版"；`v0` 是**极简版**，不是"旧版"。
-
-### 3.2 每份两种形态
+### 3.2 两种形态
 
 `.conf`（带注释，给人读）+ `.min.conf`（纯配置）。
-**内容必须一致，只差注释** —— 由 `architecture.sh` 的一致性断言兜底。
+**内容必须一致，只差注释** —— 由 `architecture.sh` 的 16 键一致性断言兜底。
 
 ⚠️ `.min.conf` 里**必须保留 `# audit-waive:` 行** —— 那是有语义的注释。
 
-### 3.3 加第三个版本的 6 条清单
+### 3.3 想加第二个配置的 6 条清单
 
-1. DNS 段与 `v0` / `v1` 逐字节一致（或说明为什么必须不同，并改测试）
+不推荐。真要加，必须同时满足：
+
+1. 与 `lazy.conf` 的 DNS 段逐字节一致（或说明为什么必须不同，并改测试）
 2. 规则顺序符合铁律：白名单 → 黑名单 → 常规分流
 3. `FINAL` 之前有域名体量足够的国内直连规则集
 4. 所有 IP 类规则带 `no-resolve`
@@ -163,7 +165,7 @@ grep -rn -iE '<你的私有域名|你的密码片段|你的用户名>' . \
 ## 5 · 全部验证都在本地 —— 刻意不挂 CI
 
 ```bash
-bash skill/tests/run.sh              # 5 阶段，13 断言
+bash skill/tests/run.sh              # 5 阶段，9 断言
 SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 ```
 
@@ -185,10 +187,10 @@ SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 
 ```
 1. bash skill/tests/run.sh                      → 12 passed, 0 failed
-2. python skill/scripts/check_surge_dns.py  profiles/v1.conf   → exit 0
-3. python skill/scripts/check_surge_dns.py  profiles/v0.conf   → exit 0
-4. （改了规则集引用时）python skill/scripts/audit_ruleset_content.py profiles/v1.conf
-5. （改了规则时）      python skill/scripts/audit_routing_coverage.py profiles/v1.conf
+2. python skill/scripts/check_surge_dns.py  profiles/lazy.conf   → exit 0
+3. python skill/scripts/check_surge_dns.py  profiles/lazy.conf   → exit 0
+4. （改了规则集引用时）python skill/scripts/audit_ruleset_content.py profiles/lazy.conf
+5. （改了规则时）      python skill/scripts/audit_routing_coverage.py profiles/lazy.conf
 6. （改了标题时）重算所有锚点，检查相对链接
 7. （push 前）grep 一遍敏感串 + 跑一次 `architecture.sh`
 ```
@@ -213,10 +215,13 @@ grep -rnoE '\]\(([^)#][^)]*)\)' --include='*.md' . | sed 's/.*](//' | sed 's/)$/
 | 1 | `[Proxy]` 段的节点（填成真实值） | 隐私泄露 | `architecture.sh` ① |
 | 2 | `[Rule]` 的顺序（`direct.txt` 挪到 REJECT 前） | 广告拦截失效 | `architecture.sh` ③-b |
 | 3 | IP 类规则的 `no-resolve`（删掉） | DNS 泄露 | `architecture.sh` ③-d + `check_12` |
-| 4 | 只改一个版本的 DNS 段 | 两个版本行为不一致 | `architecture.sh` ② |
+| 4 | 只改 `.conf` 或只改 `.min.conf` 的 DNS 段 | 两份行为不一致；使用者拿到的与文档说的不一致 | `architecture.sh` ②（只覆盖 DNS 段） |
 | 5 | `pre-matching` 的策略（改成策略组） | **Surge 拒绝加载** | `check_10` |
 | 6 | `underlying-proxy` 指向的名字 | **Surge 拒绝加载** | `check_7` |
 | 7 | `# audit-waive:` 行（删掉） | 从 2 waived 变 2 high | 无（靠"知道它是有语义的"） |
-| 8 | `.min.conf` 与 `.conf` 不同步 | 使用者拿到的与文档说的不一致 | `architecture.sh` ②（只覆盖 DNS 段） |
 
-⚠️ 第 7、8 条**没有完整覆盖** —— 这是已知的测试盲区。
+> ⚠️ **第 4 条的覆盖是部分的**：`architecture.sh` ② 只比对 **16 个 DNS 键**，
+> `.min.conf` 里其余部分（规则、组、节点）改歪了不会被拦住。
+> 第 7 条则完全没有自动化覆盖。
+>
+> 📌 这两条是**已知的测试盲区**，靠纪律补：改配置时两份一起改。

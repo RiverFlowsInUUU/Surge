@@ -38,18 +38,18 @@ fi
 S=./skill/scripts
 
 # ── 不联网 ──────────────────────────────────────────────────────────
-python "$S/check_surge_dns.py"  profiles/v1.conf              # 期望 exit 0
-python "$S/check_surge_dns.py"  profiles/v1.conf --strict      # medium 也算失败
-python "$S/check_surge_dns.py"  profiles/v1.conf --quiet       # 只打印计数
+python "$S/check_surge_dns.py"  profiles/lazy.conf              # 期望 exit 0
+python "$S/check_surge_dns.py"  profiles/lazy.conf --strict      # medium 也算失败
+python "$S/check_surge_dns.py"  profiles/lazy.conf --quiet       # 只打印计数
 bash   ./skill/tests/architecture.sh                           # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
-python "$S/audit_ruleset_content.py"  profiles/v1.conf         # 期望 exit 0
-python "$S/audit_ruleset_content.py"  profiles/v1.conf --show-domestic --force
-python "$S/audit_routing_coverage.py" profiles/v1.conf         # 期望 33/33
-python "$S/audit_routing_coverage.py" profiles/v1.conf --show-all
+python "$S/audit_ruleset_content.py"  profiles/lazy.conf         # 期望 exit 0
+python "$S/audit_ruleset_content.py"  profiles/lazy.conf --show-domestic --force
+python "$S/audit_routing_coverage.py" profiles/lazy.conf         # 期望 33/33
+python "$S/audit_routing_coverage.py" profiles/lazy.conf --show-all
 
-# ── 回归测试（5 阶段，13 断言）─────────────────────────────────────
+# ── 回归测试（5 阶段，9 断言）─────────────────────────────────────
 bash ./skill/tests/run.sh
 SKIP_NET=1 bash ./skill/tests/run.sh
 PY=/path/to/python bash ./skill/tests/run.sh
@@ -248,8 +248,8 @@ FOREIGN_PROBES = {
 }
 ```
 
-⚠️ AI 类域名允许落 `AI` 或 `PROXY` —— 因为 `v0` 没有 `AI` 组
-（AI 流量合流进 `Proxy`）。判据必须对两个版本都成立。
+⚠️ AI 类域名允许落 `AI` 或 `PROXY` —— 用户可能按需删掉 `AI` 组
+（AI 流量合流进 `Proxy`）。判据要对"删了 `AI` 组"的配置也成立。
 
 ### C 的意义
 
@@ -288,7 +288,7 @@ FOREIGN_PROBES = {
 
 ### ② DNS 段一致性
 
-16 个键逐字比对 `v0.conf` 与 `v1.conf`：
+16 个键逐字比对 `lazy.conf` 与 `lazy.min.conf`：
 
 ```python
 DNS_KEYS = [
@@ -303,21 +303,20 @@ DNS_KEYS = [
 
 任一键只在一边存在、或值不同 → 失败。
 
-**理由**：`v0` 的定位是「裁剪功能」，不是「裁剪防泄露」。DNS 段被改动即是缺陷。
+**理由**：`.min.conf` 的定位是「去掉注释」，不是「裁剪配置」。DNS 段被改动即是缺陷。
 
 ### ③ 规则顺序铁律
 
 | 断言 | 判据 |
 |:-----|:-----|
 | ③-a | `FINAL` 必须是最后一条 |
-| ③-b (i) | 白名单 DIRECT 在第一条 REJECT 之前；且**只能有一条**（`v0` 豁免） |
+| ③-b (i) | 白名单 DIRECT 在第一条 REJECT 之前；且**只能有一条** |
 | ③-b (ii) | 第一条 REJECT 之后**必须有** DIRECT 规则（否则国内流量整片走代理） |
 | ③-c | 所有 IP 类规则在所有域名类规则之后 |
 | ③-d | 所有 IP 类规则带 `no-resolve` |
 
 ⚠️ ③-b 的两条是**独立的约束**，不是「DIRECT 在 REJECT 之前」一条。
 见 [`pitfalls.md`](pitfalls.md) 坑 9。
-⚠️ `v0` 刻意无白名单守卫，豁免并打印说明行。见坑 10。
 
 ---
 
@@ -340,8 +339,9 @@ DNS_KEYS = [
 | v2 | 加 `strip_c()`，只扫有效行 | 注释里的 `10.0.0.0/8` 被误报，见坑 8 |
 | v1 | 架构检查断言「DIRECT 不在 REJECT 之前」 | 初版 |
 | v2 | 拆成 ③-b (i)(ii) 两条独立约束 | 不变量本身写错了，见坑 9 |
-| v1 | ③-b 对 `v0` 也生效 | 初版 |
-| v2 | `v0*` 豁免 + 打印说明行 | 要求 v0 改名成 v1，见坑 10 |
+| v1 | ③-b 对「精简配置」也生效 | 初版 |
+| v2 | 对精简配置豁免 + 打印说明行 | 曾要求极简版改名成完整版，见坑 10 |
+| v3 | 取消豁免 —— 配置已收敛为单一版本 | 见 [`docs/07`](../../docs/07-文件版本沿革.md) §3 |
 | — | 无豁免机制 | 初版：豁免只能写死在审计器里 |
 | — | 引入 `# audit-waive:` | 判据可以退让，但退让必须留痕，见坑 15 |
 | v1 | `audit_ruleset_content` 遍历原始行 | 初版 |

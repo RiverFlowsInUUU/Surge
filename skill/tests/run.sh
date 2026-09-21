@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Surge 审计脚本回归测试 —— 两阶段，退出码非 0 即失败。
+# Surge 审计脚本回归测试 —— 五阶段，退出码非 0 即失败。
 #
 #   阶段 1 · DNS 面 fixture 回归
 #     把 skill/tests/ 的 3 个 fixture 喂给 check_surge_dns.py（3 个断言）。
@@ -7,11 +7,14 @@
 #     而不是恒返回 0。
 #
 #   阶段 2 · 真实 profile 回归
-#     对仓库里**全部** profiles/*.conf 跑 check_surge_dns.py 与 architecture.sh，
-#     期望全部通过。
+#     对仓库里**全部** profiles/*.conf 跑 check_surge_dns.py，期望全部通过。
 #     ⚠️ 为什么不并进阶段 1：阶段 1 的 fixture 是**合成**配置（不含完整 DNS 段、
 #        不引用远程规则集），喂给 architecture.sh 会因为"缺少 DNS 键"而假红；
 #        而 architecture.sh 的断言对象必须是**真实 profile**（它守的是占位符纪律）。
+#
+#   阶段 3 · 架构不变量（占位符纪律 / 两份形态 DNS 段一致性 / 规则顺序铁律）
+#   阶段 4 · 规则集内容 + 分流覆盖（需联网，SKIP_NET=1 可跳过）
+#   阶段 5 · markdown 相对链接与锚点
 #
 # 为什么必须有"解释器与依赖"的前置检查：
 #   解释器坏掉时脚本会以**退出码 1** 结束 —— 而 bad_* 期望的恰恰也是 1。
@@ -21,7 +24,7 @@
 # 用法：
 #   bash skill/tests/run.sh                        # 用 PATH 里的 python
 #   PY=/path/to/python bash skill/tests/run.sh     # 指定解释器
-#   SKIP_NET=1 bash skill/tests/run.sh             # 跳过需要联网的阶段 3
+#   SKIP_NET=1 bash skill/tests/run.sh             # 跳过需要联网的阶段 4
 
 set -u
 
@@ -136,7 +139,9 @@ if [ "${SKIP_NET:-0}" != "1" ]; then
   printf '\n%s\n' "阶段 4 · 规则集内容 + 分流覆盖（需要联网，SKIP_NET=1 可跳过）"
   printf '%s\n' "------------------------------------------------------------------"
   pass4=0; fail4=0
-  for _p in "$PROFILES"/v0.conf "$PROFILES"/v1.conf; do
+  # ⚠️ 只对**带注释的完整版**跑联网审计：min 版是同一份配置去掉注释，
+  #    跑两遍纯属浪费（且两者 DNS 段已被阶段 3 断言为逐字相同）。
+  for _p in "$PROFILES"/lazy.conf; do
     [ -f "$_p" ] || continue
     _name="$(basename "$_p")"
     for _s in audit_ruleset_content.py audit_routing_coverage.py; do

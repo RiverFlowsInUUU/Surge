@@ -10,8 +10,8 @@
 #   所以这里守三条**只有本项目才成立**的不变量：
 #     ① 占位符纪律：节点地址必须是 RFC 5737 文档地址段 / example.com，
 #        凭据必须是 REPLACE_WITH_*，**绝不能**出现真实 IP / 真实域名 / 真实凭据。
-#     ② DNS 段一致性：v0 与 v1 的 DNS 相关键必须**逐字相同** ——
-#        v0 的定位是"裁剪功能"，不是"裁剪防泄露"，DNS 段被改动即是缺陷。
+#     ② 带注释版与 min 版的 DNS 段必须**逐字相同** ——
+#        min 版的定位是"去掉注释"，不是"裁剪配置"，DNS 段被改动即是缺陷。
 #     ③ 规则顺序铁律：每个 profile 里，白名单 → REJECT → 域名类直连 → IP 类 → FINAL。
 #
 # 退出码：0 = 通过；1 = 有违规；2 = 环境问题（文件缺失 / python 不可用）。
@@ -153,7 +153,7 @@ for f in files:
         if not any(a in server for a in ALLOWED_DOMAINS):
             fails.append(f"{f}:{i}: [Proxy] 里的节点主机名 `{server}` 不在允许清单内")
 
-# ── ② DNS 段一致性：v0 与 v1 的 DNS 相关键逐字相同 ──────────────────────────
+# ── ② DNS 段一致性：带注释版与 min 版的 DNS 相关键逐字相同 ─────────────────
 DNS_KEYS = [
     "dns-server", "encrypted-dns-server", "encrypted-dns-follow-outbound-mode",
     "hijack-dns", "allow-dns-svcb", "exclude-simple-hostnames", "read-etc-hosts",
@@ -174,21 +174,25 @@ def dns_kv(path):
             d[k.strip()] = v.strip()
     return d
 
-v0, v1 = os.path.join(profiles_dir, "v0.conf"), os.path.join(profiles_dir, "v1.conf")
-if os.path.isfile(v0) and os.path.isfile(v1):
-    a, b = dns_kv(v0), dns_kv(v1)
+full_p, min_p = os.path.join(profiles_dir, "lazy.conf"), \
+                os.path.join(profiles_dir, "lazy.min.conf")
+if os.path.isfile(full_p) and os.path.isfile(min_p):
+    a, b = dns_kv(full_p), dns_kv(min_p)
     for k in DNS_KEYS:
         if k not in a or k not in b:
             # min 版与完整版都应含全部 DNS 键；缺一个就说明有人漏抄
             if k in a or k in b:
-                fails.append(f"DNS 段不一致：`{k}` 只在 {'v0' if k in a else 'v1'} 里存在")
+                fails.append(f"DNS 段不一致：`{k}` 只在 "
+                             f"{'lazy.conf' if k in a else 'lazy.min.conf'} 里存在")
             continue
         if a[k] != b[k]:
             fails.append(f"DNS 段不一致：`{k}` 的值不同\n"
-                         f"        v0: {a[k]}\n"
-                         f"        v1: {b[k]}")
+                         f"        lazy.conf:     {a[k]}\n"
+                         f"        lazy.min.conf: {b[k]}")
     if not any("DNS 段不一致" in x for x in fails):
-        oks.append(f"v0 / v1 的 {len(DNS_KEYS)} 个 DNS 相关键逐字相同")
+        oks.append(f"lazy.conf / lazy.min.conf 的 {len(DNS_KEYS)} 个 DNS 相关键逐字相同")
+else:
+    fails.append("找不到 lazy.conf 或 lazy.min.conf —— 两份形态必须同时存在")
 
 # ── ③ 规则顺序铁律 ──────────────────────────────────────────────────────────
 def rules_of(path):
@@ -236,18 +240,10 @@ for f in files:
     REJECT_I = [i for i, p in enumerate(pols) if p.startswith("REJECT")]
     DIRECT_I = [i for i, p in enumerate(pols) if p == "DIRECT"]
     first_reject = REJECT_I[0] if REJECT_I else None
-    # ⚠️ v0 是**刻意**移除了白名单守卫的（定位就是"极简懒人版"，
-    #    代价写在 v0.conf 文件末尾的"三点后果"里）。
-    #    所以"必须有白名单守卫"这条不变量**不适用于 v0** ——
-    #    第一版把它一并判负，等于要求 v0 改名成 v1。
-    #    不变的只有：拦截必须排在域名类直连之前。
-    is_v0 = f.startswith("v0")
     if first_reject is not None:
         before = [i for i in DIRECT_I if i < first_reject]
         after = [i for i in DIRECT_I if i > first_reject]
-        if is_v0:
-            oks.append(f"{f}: v0 刻意不含白名单守卫（代价见文件末尾说明）")
-        elif not before:
+        if not before:
             fails.append(f"{f}: 没有白名单守卫（第一条 REJECT 在第 {rs[first_reject][0]} 行，"
                          f"它之前没有任何 DIRECT 规则）")
         elif len(before) > 1:

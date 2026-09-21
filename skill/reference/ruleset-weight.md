@@ -61,7 +61,7 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 ## 3 · 怎么得到这些数字
 
 ```bash
-python skill/scripts/audit_ruleset_content.py profiles/v1.conf
+python skill/scripts/audit_ruleset_content.py profiles/lazy.conf
 ```
 
 输出里每条规则集都有：
@@ -142,7 +142,8 @@ _OTHER_TYPES = {"URL-REGEX", "USER-AGENT", "PROCESS-NAME", "PROTOCOL",
 
 1. **合并重叠的直连集** —— 去掉重复条目，不减少覆盖面
 2. **换 IP 类规则集为域名类** —— 前提是域名条目够
-3. **砍掉用不到的分流** —— 例如不要 AI 分流就用 `v0`，少两个组与几条规则
+3. **砍掉用不到的分流** —— 例如不要 AI 分流就删掉 `AI` 组与 `AI.list` 那条规则，
+   少两个成员与一处分流
 4. **给远程集加 `update-interval` 拉长** —— 减少刷新频率（但会让新广告域名迟迟命不中）
 
 ⚠️ **不要**为了"轻"而把 `direct.txt` 换成一个名字像国内域名集、

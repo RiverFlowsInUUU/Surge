@@ -27,8 +27,8 @@ Agent 会自动加载。
 | `scripts/audit_ruleset_content.py` | **规则集层审计**（远程内容）。下载全部被引用的远程规则集，数「缺 `no-resolve` 的 IP 条目」与「直连集合的域名条目总量」 |
 | `scripts/audit_routing_coverage.py` | **分流覆盖审计**。域名 → 命中规则 → 策略；17 个国内探针（**刻意混入非 `.cn`**）+ 8 个境外探针 + 8 个误杀探针 |
 | `scripts/_surge_common.py` | 共享逻辑（INI 解析 / 端点判据 / `policy_index`），**所有脚本从这里 import** |
-| `tests/run.sh` | 5 阶段回归，13 个断言 |
-| `tests/architecture.sh` | 三条项目不变量（占位符纪律 / v0-v1 DNS 段一致性 / 规则顺序铁律） |
+| `tests/run.sh` | 5 阶段回归，9 个断言 |
+| `tests/architecture.sh` | 三条项目不变量（占位符纪律 / 两份形态 DNS 段一致性 / 规则顺序铁律） |
 | `tests/*.conf` | 3 个 fixture（1 个期望通过 + 2 个**期望判负**） |
 
 > 📐 **为什么拆**：Anthropic 官方 skill 撰写规范要求 `SKILL.md` 正文 **< 500 行**
@@ -47,17 +47,17 @@ Python 3.8+，**仅标准库**（`urllib` / `re` / `argparse` / `tempfile`）。
 ```bash
 S=./skill/scripts
 
-python "$S/check_surge_dns.py"          profiles/v1.conf   # 期望 0 high
-python "$S/check_surge_dns.py"          profiles/v1.conf --strict   # medium 也算失败
-python "$S/check_surge_dns.py"          profiles/v1.conf --quiet    # 只打印计数
+python "$S/check_surge_dns.py"          profiles/lazy.conf   # 期望 0 high
+python "$S/check_surge_dns.py"          profiles/lazy.conf --strict   # medium 也算失败
+python "$S/check_surge_dns.py"          profiles/lazy.conf --quiet    # 只打印计数
 
-python "$S/audit_ruleset_content.py"    profiles/v1.conf   # 期望通过（需联网）
-python "$S/audit_ruleset_content.py"    profiles/v1.conf --show-domestic
+python "$S/audit_ruleset_content.py"    profiles/lazy.conf   # 期望通过（需联网）
+python "$S/audit_ruleset_content.py"    profiles/lazy.conf --show-domestic
 
-python "$S/audit_routing_coverage.py"   profiles/v1.conf   # 期望 33/33（需联网）
-python "$S/audit_routing_coverage.py"   profiles/v1.conf --show-all
+python "$S/audit_routing_coverage.py"   profiles/lazy.conf   # 期望 33/33（需联网）
+python "$S/audit_routing_coverage.py"   profiles/lazy.conf --show-all
 
-bash ./skill/tests/run.sh                                  # 5 阶段，13 断言
+bash ./skill/tests/run.sh                                  # 5 阶段，9 断言
 SKIP_NET=1 bash ./skill/tests/run.sh                       # 跳过联网阶段 4
 ```
 

@@ -2,8 +2,8 @@
 
 > **何时读**：要产出一份加固后的 Surge profile 时。或者想对照现成模板检查自己配置缺了什么。
 >
-> 本文件是 [`profiles/v1.conf`](../../profiles/v1.conf) 的完整复刻 + 逐行理由。
-> 只想直接拿走用 → 用仓库里的 `profiles/v1.conf`（带注释）或 `profiles/v1.min.conf`（纯配置）。
+> 本文件是 [`profiles/lazy.conf`](../../profiles/lazy.conf) 的完整复刻 + 逐行理由。
+> 只想直接拿走用 → 用仓库里的 `profiles/lazy.conf`（带注释）或 `profiles/lazy.min.conf`（纯配置）。
 
 ---
 

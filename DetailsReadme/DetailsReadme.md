@@ -30,10 +30,8 @@
 ```
 surge-anti-dns-leak/
 ├── profiles/
-│   ├── v1.conf          # 完整版（带注释）—— 推荐
-│   ├── v1.min.conf      # 完整版（纯配置，注释剥掉）
-│   ├── v0.conf          # 极简版（带注释）
-│   └── v0.min.conf      # 极简版（纯配置）
+│   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
+│   └── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
 ├── docs/                # 01–10 专题
 ├── DetailsReadme/       # 本文件
@@ -351,8 +349,8 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 - 需要出口 IP 稳定（某些服务按 IP 做风控）
 - 想知道「我现在到底走哪个节点」
 
-那 `select` 更合适。`v0` 用的就是 `select` —— 它的用户诉求是「我看见什么就是什么」，
-静默换节点是**意外行为**。代价是节点挂了要手动切。
+那 `select` 更合适（想这么用的话，把 `Proxy = smart, …` 改成 `select`）。
+静默换节点对这类诉求是**意外行为**。代价是节点挂了要手动切。
 
 ### 6.3 本模板的分工
 
@@ -452,7 +450,7 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 于是它们最终落 `FINAL → Proxy`，其解析必须由节点远端完成 —— 这本身没问题
 （远端解析更准）。但**本地若需要它的地址**（NAT 检测要真实 IP），就会出问题。
 
-⇒ 所以 `v1` 里有这三条：
+⇒ 所以本配置里有这三条：
 
 ```
 DOMAIN-SUFFIX,nintendo.net,Proxy
@@ -784,11 +782,13 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 见 §13.3。`AD` 组是**独立的手动开关**，不被规则引用是刻意的分层设计。
 
-### 16.5 `v0` 的三点代价
+### 16.5 两份形态必须同步
 
-移除白名单守卫 / AI 合流 / `Proxy` 是 `select`。
-详细写在 [`profiles/v0.conf`](../profiles/v0.conf) 末尾 —— 刻意放在**改动发生的地方**，
-因为改的人不会去看 `docs/`。
+[`profiles/lazy.conf`](../profiles/lazy.conf)（带注释）与
+[`profiles/lazy.min.conf`](../profiles/lazy.min.conf)（纯配置）**内容一致，只差注释**。
+
+改配置时两份都要动 —— 阶段 3 的架构检查会断言它们的 **16 个 DNS 相关键逐字相同**，
+只改一份会被拦下。
 
 ### 16.6 兜底指 `Proxy` 而非国内组
 
@@ -801,7 +801,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 
 **Q：我照抄了，但国内网站慢 / 打不开。**
 
-先跑 `python skill/scripts/audit_routing_coverage.py profiles/v1.conf`。
+先跑 `python skill/scripts/audit_routing_coverage.py profiles/lazy.conf`。
 若国内探针没命中 `DIRECT`，检查两条：① 有没有删掉 `direct.txt` 那条规则；
 ② 有没有把 `GEOIP,CN` 挪到域名规则前面。
 
@@ -842,20 +842,20 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 
 ### 18.1 改动前必须知道的三条
 
-1. **DNS 段不许只改一个版本。** `v0` / `v1` 的 16 个 DNS 键由测试逐字比对。
-   要改就两个一起改。
+1. **DNS 段不许只改一份。** `lazy.conf` / `lazy.min.conf` 的 16 个 DNS 键由测试逐字比对。
+   要改就两份一起改。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
 
-### 18.2 加第三个版本
+### 18.2 想加第二个配置
 
-见 [`docs/07`](../docs/07-文件版本沿革.md) §6 的 6 条清单 —— 那 6 条就是
-`architecture.sh` 的全部断言。**能过测试的版本才叫一个新版本。**
+不推荐（理由见 [`docs/07`](../docs/07-文件版本沿革.md) §3.2）。真要加，见那里的
+6 条清单 —— 那 6 条就是 `architecture.sh` 的全部断言。**能过测试的才算一份新配置。**
 
 ### 18.3 全部验证都在本地
 
 ```bash
-bash skill/tests/run.sh              # 5 阶段，13 个断言
+bash skill/tests/run.sh              # 5 阶段，9 个断言
 SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 ```
 

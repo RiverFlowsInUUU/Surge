@@ -8,11 +8,11 @@
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Profiles](https://img.shields.io/badge/Profiles-v1%20%7C%20v0-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Rules](https://img.shields.io/badge/Rules-12%20%7C%207-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Profiles](https://img.shields.io/badge/Profiles-lazy-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Rules](https://img.shields.io/badge/Rules-12-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
-[快速开始](#-快速开始) · [文件结构](#-文件结构) · [两个版本](#-两个版本) · [防泄露原理](#-防泄露原理) · [策略组结构](#-策略组结构) · [规则顺序](#-规则顺序) · [规则来源](#-规则来源) · [更多文档](#-更多文档)
+[快速开始](#-快速开始) · [文件结构](#-文件结构) · [防泄露原理](#-防泄露原理) · [策略组结构](#-策略组结构) · [规则顺序](#-规则顺序) · [规则来源](#-规则来源) · [更多文档](#-更多文档)
 
 </div>
 
@@ -25,7 +25,7 @@
       🧩<br><b>不绑节点与订阅</b><br><sub>节点全为占位符<br>换节点不用改一行结构</sub>
     </td>
     <td align="center" width="33%">
-      🧪<br><b>脚本可复跑</b><br><sub>12 项审计 + 分流覆盖<br>回归测试 13 条断言</sub>
+      🧪<br><b>脚本可复跑</b><br><sub>12 项审计 + 分流覆盖<br>回归测试 9 条断言</sub>
     </td>
   </tr>
 </table>
@@ -35,9 +35,9 @@
 ## 🚀 快速开始
 
 ```
-1️⃣ 挑配置   →   profiles/v1.conf（推荐）
-2️⃣ 填节点   →   [Proxy] 段的三条占位节点
-3️⃣ 填订阅   →   如有的话，改成你的订阅组
+1️⃣ 拿配置   →   profiles/lazy.conf
+2️⃣ 填节点   →   [Proxy] 段的占位节点
+3️⃣ 填充值   →   如有的话，改成你自己的
 4️⃣ 导入     →   Surge
 ```
 
@@ -49,7 +49,7 @@
 
 填完节点即可导入，无需其他改动。
 
-💡 只要防泄露、不要分流？改用 `profiles/v0.conf`（极简懒人版）—— 它砍掉了 AI 分流与广告白名单守卫，**DNS 段与 `v1` 逐字相同**。
+📄 **两份形态**：`lazy.conf`（带注释）与 `lazy.min.conf`（纯配置），内容一致，只差注释，取用其一即可。
 
 ---
 
@@ -57,28 +57,13 @@
 
 ```
 surge-anti-dns-leak/
-├── 📁 profiles/            # 4 份配置（2 个可选版本，各有带注释 / 纯配置两份）
+├── 📁 profiles/            # 2 份配置（带注释 / 纯配置，内容一致）
 ├── 🖼️ icons/               # 策略组图标（已内置，不跨项目引用）
 ├── 📚 docs/                # 10 篇专题（原理 / 清单 / 逐段讲解 / 审计读数 等）
 ├── 📘 DetailsReadme/       # 完整技术文档
 ├── 🗓️ CHANGELOG.md         # 更新日志（按时间倒序）
 └── 🧪 skill/               # 方法论（SKILL.md + reference/）+ 3 个审计脚本 + 回归测试
 ```
-
----
-
-## 📦 两个版本
-
-只有两个可选版本。
-
-| 版本 | 策略组 | 规则 | 定位 |
-|:----:|:------:|:----:|:-----|
-| ⭐ **`v1`** | 3 | 12 | **推荐** · 完整分流（AI 组 + 广告白名单守卫） |
-| 🪶 `v0` | 2 | 7 | 极简懒人版 · 只做防泄露与广告拦截 |
-
-- ⭐ **`v1`** —— `Proxy` / `AI` / `AD` 三个组。AI 流量走独立的 `AI` 组（出口与日常流量分开），广告拦截带白名单守卫（43 条防误杀）。
-- 🪶 **`v0`** —— `Proxy` / `Final` 两个组，砍掉 AI 分流、白名单守卫、`[URL Rewrite]`。**代价写在文件末尾**：黑名单误杀的功能域没人自动放行，AI 流量与日常流量合流。
-- 📄 **两份形态** —— `.conf`（带注释）与 `.min.conf`（纯配置）内容一致，只差注释，取用其一即可。
 
 ---
 
@@ -100,7 +85,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 ## 🎯 策略组结构
 
-以 **`v1`** 为例：3 个组 / 12 条规则。组与组可以互相引用，最终都收敛到 `Proxy` 或 `DIRECT`。
+3 个组 / 12 条规则。组与组可以互相引用，最终都收敛到 `Proxy` 或 `DIRECT`。
 
 **✈️ 节点** —— 4 条占位节点
 
@@ -153,7 +138,7 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 ## 📖 更多文档
 
-- ⚠️ [`docs/09-注意事项.md`](docs/09-注意事项.md) —— 使用前必看：`v0` 的代价 · 规则集刷新 · 刻意不挂 CI
+- ⚠️ [`docs/09-注意事项.md`](docs/09-注意事项.md) —— 使用前必看：规则集刷新 · 刻意不挂 CI
 - 🎨 [`docs/10-图标与许可.md`](docs/10-图标与许可.md) —— 图标来源 · MIT 许可 · 第三方版权
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md) —— 更新日志（按时间倒序，遵循 Keep a Changelog）
 - 📘 [`DetailsReadme/`](DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
