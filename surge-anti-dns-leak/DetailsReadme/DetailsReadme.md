@@ -629,19 +629,29 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 **`routing.conf` —— 26 个组**
 
+组序与 egern v2.5 **逐位对齐**（由 `skill/tests/architecture.sh` 的 ④ 断言守着）。
+
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
-| 总入口 | `Proxy` / `Smart` | `smart` | 全部节点参与打分 |
-| 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
-| 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
-| 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
-| 应用 | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Google` / `Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` / `GitHub` / `Microsoft` / `WeChat` / `Final` | `select` | 地区组作为**子节点**列进去 |
-| 开关 | `AD` | `select` | 同 lazy |
+| ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `MAX`）；`Smart` 是自动全节点池 |
+| ② 应用 | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都是 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员** |
+| ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
+| ③ 开关 | `WeChat` / `AD` | `select` | `WeChat` 首项 `DIRECT`；`AD` 独立手动开关 |
+| ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
+| ④ 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
+| ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
-> ⚠️ **注意类型差异**：应用组（上面 14 个）是 `select` 而不是 `smart` ——
-> 因为 **Smart 组不能拿其他组当子策略**（见 §13.2 ②），而应用组要"把地区组列进去"。
+> ⚠️ **应用组是 `select` 而不是 `smart`** —— 官方限制：**Smart 组不能拿其他组当子策略**
+> （见 §13.2 ②）。而 egern 的对应物是 `policies: [Proxy] + flatten: true`，
+> 其 Surge 等价写法就是 `select, include-other-group="Proxy"`。
 > 地区组用 `smart` 是因为它筛的是**具体节点**，需要打分。
-> 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md#22--smart-组不能拿组名当子策略)。
+>
+> ⚠️ **能力差异（必须说清）**：egern 的应用组是 `fallback` / `smart`（**自动**故障转移），
+> Surge 的 `select` 是**纯手动** ⇒ 本配置的应用组「默认走 `Proxy` 全部节点 + 面板可手动改」，
+> **没有自动故障转移**。想要自动选优就把某组换成 `smart, include-other-group="Proxy"`
+> （代价：面板上不能再手动挑节点）。
+>
+> 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
 **应用组各自的默认取向**（首项即默认，与 egern v2.5 对齐）：
 

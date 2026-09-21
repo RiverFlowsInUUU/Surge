@@ -312,6 +312,79 @@ for f in files:
 
     oks.append(f"{f}: {len(rs)} 条规则，顺序与 no-resolve 均符合铁律")
 
+# ── ④ routing.conf 的组顺序必须与 egern v2.5 对齐 ───────────────────────────
+#
+# ⚠️ 为什么必须有这一条（这是**踩过两次**的坑）：
+#    [Proxy Group] 的**先后顺序**此前没有任何断言守着 —— 改一个组、挪一段注释，
+#    顺序就可能悄悄漂走，而所有其它断言（成员可解析、规则可解析、地区正则一致）
+#    **照样全绿**。老板两次发现"分流组前后顺序又错了"，两次都是靠肉眼。
+#    ⇒ 顺序是**被承诺过的对外特征**（README 明写"与 egern v2.5 对齐"），
+#      就必须有机械对账。
+#
+# 顺序来源（唯一真值）：仓库外的参考配置 egern v2.5。
+# ⚠️ 该文件**不在本仓库内**，所以断言采用"**把顺序写死在这里**"的做法：
+#    它是承诺值，不是从外部文件推导出来的。改顺序 = 必须同时改这里，
+#    这正是我们想要的 —— 逼改动者显式面对"我在改一个承诺"。
+PG_ORDER = [
+    "Proxy", "Smart",
+    "ChatGPT", "Gemini", "Claude", "AI",
+    "Spotify", "YouTubeMusic", "YouTube", "GitHub", "Google", "Microsoft",
+    "Telegram", "Twitter",
+    "Airport", "WeChat", "AD",
+    "Hong Kong", "USA", "Japan", "Taiwan", "Singapore", "Korea",
+    "Other Regions", "MAX",
+    "Final",
+]
+
+def group_order(path):
+    out, cur = [], False
+    import re as _re
+    for ln, line in enumerate(open(path, encoding="utf-8"), 1):
+        s = line.strip()
+        if s == "[Proxy Group]":
+            cur = True
+            continue
+        if s.startswith("[") and cur:
+            break
+        if not cur or not s or s.startswith("#") or "=" not in s:
+            continue
+        name = s.split("=", 1)[0].strip()
+        rhs = s.split("=", 1)[1].strip()
+        if _re.match(r"^(select|smart|url-test|load-balance|fallback|round-robin)\b", rhs):
+            out.append((ln, name))
+    return out
+
+_rf_full = os.path.join(profiles_dir, "routing.conf")
+if os.path.isfile(_rf_full):
+    got = group_order(_rf_full)
+    got_names = [n for _, n in got]
+    if got_names == PG_ORDER:
+        oks.append(f"routing.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
+                   f"与 egern v2.5 对齐 👍")
+    else:
+        diffs = []
+        for i in range(max(len(got_names), len(PG_ORDER))):
+            a = PG_ORDER[i] if i < len(PG_ORDER) else "<缺>"
+            b = got_names[i] if i < len(got_names) else "<多>"
+            if a != b:
+                line = got[i][0] if i < len(got) else None
+                diffs.append(f"        第 {i+1} 位：期望 `{a}`，实际 `{b}`"
+                             + (f"（第 {line} 行）" if line else ""))
+        fails.append("routing.conf: [Proxy Group] 顺序与 egern v2.5 不一致\n"
+                     + "\n".join(diffs)
+                     + "\n        ⇒ 顺序是对外承诺（README 明写与 egern 对齐）；"
+                       "确实要改就同时更新本文件的 PG_ORDER")
+
+    # ④-b min 版必须与完整版组顺序一致（min 是同一份配置去注释，不能各排各的）
+    _rf_min = os.path.join(profiles_dir, "routing.min.conf")
+    if os.path.isfile(_rf_min):
+        got_min = [n for _, n in group_order(_rf_min)]
+        if got_min == got_names:
+            oks.append("routing.conf / routing.min.conf 的组顺序一致 👍")
+        else:
+            fails.append("routing.min.conf 的组顺序与 routing.conf 不同 —— "
+                         "min 版应由完整版机械生成，不该各排各的")
+
 # ── 输出 ────────────────────────────────────────────────────────────────────
 for o in oks:
     print(f"   ✅ {o}")

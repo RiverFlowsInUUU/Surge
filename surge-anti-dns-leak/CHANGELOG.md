@@ -13,11 +13,11 @@
 - 🧭 **一份分流配置**：`profiles/routing.conf`（带注释）与 `routing.min.conf`（纯配置）；
   26 组 / 26 条规则，按**应用**分并在组内按**地区**再分
   （中国香港 / 美国 / 日本 / 中国台湾 / 新加坡 / 韩国 / 其它地区 + 低倍率池）
-- 🧩 **15 个应用分流组**，取向与 egern v2.5 逐组对齐：
+- 🧩 **12 个应用分流组**，取向与 egern v2.5 逐组对齐：
   ChatGPT / Gemini / Claude / AI / Google / Spotify / YouTubeMusic / YouTube /
-  Telegram / Twitter / GitHub / Microsoft / WeChat / Final
+  GitHub / Microsoft / Telegram / Twitter
   - 🤖 AI 与开发类默认走代理（ChatGPT / Gemini / Spotify / YouTube / Telegram /
-    Twitter / GitHub / Google），Claude 默认落**中国台湾**组
+    Twitter / GitHub），Claude 默认落**中国台湾**组
   - 🪟 `Microsoft` 与 💚 `WeChat` **默认直连** —— 微信单列一组的意义是把它从兜底里
     摘出来，避免被 `Final` 送进代理
   - 🔎 `Google` 首项指向 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」，与 egern 一致
@@ -68,16 +68,33 @@
 - 🐛 **修正配置内关于广告组的说明**：`AD` 组是独立的手动开关，
   拦截动作走字面量策略，两者分层存在、职责不重叠
 - 🐛 **移除空转参数**：`update-interval` 写在非订阅型策略组上不生效
+- 🐛 **`[Proxy Group]` 段序改为与 egern v2.5 逐位对齐**：
+  ① 总入口 → ② 应用组 → ③ 订阅槽位 + 开关 → ④ 地区组 + 精选 → ⑤ 兜底。
+  并把 `MAX` 放回 `Proxy` 的**首项**（egern 的 `Proxy.policies[0]` 就是 `MAX`）。
+  此前顺序与应用组写法都是自创的，与 egern 不符
+- 🐛 **应用组改为 `select, include-other-group="Proxy"`**：egern 的应用组
+  `policies` 只有 `[Proxy]` 一项（外加 `flatten: true`），此前"把地区组一个个列成成员"
+  是读错 `flatten` 之后的自创写法
+- 🐛 **审计器允许策略组前向引用**：Surge 官方文档的
+  `include-other-group="A,B"` 示例本身就是引用后面才定义的组。此前审计器要求
+  "被引用的组必须先定义"，会把合法的配置误判为 high
+- 🐛 **把 `[Proxy Group]` 组顺序钉进回归测试**：此前**没有任何断言守着顺序**，
+  改一个组就可能让顺序悄悄漂走而所有测试照旧全绿
 
 ### 说明
 
 - 🔐 **本仓库是脱敏模板**。所有节点地址均为文档专用地址段，凭据均为占位符，
   导入前需替换为自己的节点
 - 🔀 **`flatten` 的 Surge 对应物是 `include-other-group`**：egern 的 `flatten: true`
-  把组名替换成组内具体节点，Surge 用 `include-other-group` 达到同样效果（官方原文：
-  "includes the resolved member policies from other policy groups"）
-- ⚠️ **Smart 组不能拿组名当子策略**：官方明文限制，所以「地区组作子节点」只用于
-  `select` 组；需要 `smart` 自动选优的地方一律走 `include-other-group`
+  把**组名**替换成组内具体节点，Surge 用 `include-other-group` 达到同样效果（官方原文：
+  "includes the resolved member policies from other policy groups"）。
+  ⇒ 应用组因此写成 `select, include-other-group="Proxy"`，与 egern 逐字对齐
+- ⚠️ **Smart 组不能拿组名当子策略**：官方明文限制，需要 `smart` 自动选优的地方
+  一律走 `include-other-group`
+- ⚠️ **应用组没有自动故障转移**：egern 的应用组是 `fallback` / `smart`（自动），
+  Surge 的 `select` 是纯手动 ⇒ 本配置的应用组是「默认走 `Proxy` 全部节点 + 面板可改道」。
+  想要自动选优就把某个组换成 `smart, include-other-group="Proxy"`
+  （代价：面板上不能再手动挑节点）
 - 🔁 **地区关键词有两份拷贝**：`Other Regions` 的负向断言把另外 6 个地区组的
   关键词逐字抄了一遍。Surge 的 filter 不支持引用变量，消灭不掉 ⇒ 新增
   `audit_region_filters.py` 逐词比对，并由回归测试守着它的判别力

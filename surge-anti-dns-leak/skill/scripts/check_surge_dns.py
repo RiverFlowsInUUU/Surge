@@ -249,7 +249,15 @@ def is_domestic_name(host):
 
 
 def check_7_groups(sections):
-    """7 · 策略组引用的节点是否存在于 [Proxy]。"""
+    """7 · 策略组引用的节点 / 组是否存在于 [Proxy] / [Proxy Group]。
+
+    ⚠️ **允许前向引用**（本组可以引用在它**之后**才定义的组）。
+       依据：官方文档「包含本地或其他策略组的策略」一节的示例本身就是前向引用 ——
+       `PROXY = select, include-other-group="A,B"` 写在 `A` / `B` 定义之前。
+       ⇒ 所以必须先把**全部**组名收集齐，再逐组校验；不能边扫边判。
+       本配置还刻意把组序对齐到 egern v2.5（总入口 → 应用组 → 订阅槽位 → 地区组 → 兜底），
+       这必然产生前向引用（`Proxy` 引用它后面的地区组）。
+    """
     proxy_entries = sections.get("proxy", [])
     defined = set()
     for lineno, raw in proxy_entries:
@@ -259,15 +267,22 @@ def check_7_groups(sections):
         defined.add(s.split("=", 1)[0].strip())
     lower = {d.lower(): d for d in defined}
 
+    # 第一遍：收集全部组名 + 保留每条定义，供第二遍校验
     group_entries = sections.get("proxy group", [])
     group_names = []
+    parsed = []
     for lineno, raw in group_entries:
         s = strip_comment(raw)
         if not s or "=" not in s:
             continue
         name = s.split("=", 1)[0].strip()
         group_names.append(name)
-        members = split_csv(s.split("=", 1)[1])
+        parsed.append((lineno, name, split_csv(s.split("=", 1)[1])))
+
+    known_groups = set(group_names)
+
+    # 第二遍：校验（此时 known_groups 已含全部组名 ⇒ 前向引用合法）
+    for lineno, name, members in parsed:
         if not members:
             add(HIGH, 7, f"策略组 `{name}` 没有任何成员", "第 %d 行" % lineno)
             continue
@@ -281,7 +296,7 @@ def check_7_groups(sections):
                 continue
             if m.lower() in BUILTIN_POLICIES:
                 continue
-            if m in defined or m in group_names:
+            if m in defined or m in known_groups:
                 continue
             if m.lower() in lower:
                 continue

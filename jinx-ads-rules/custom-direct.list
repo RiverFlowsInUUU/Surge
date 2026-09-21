@@ -1,0 +1,23 @@
+# custom-direct.list —— 手工追加的直连域名（非上游 Jinx 来源）
+#
+# 用途：上游 Jinx 未放行、但实测为「功能域」（必须直连、绝不能拦）的域名。
+# 合并方式：由 skill/scripts/convert_ruleset.py 的 --extra-white 参数读入，
+#           追加在 guard 过滤之后 —— 不参与碰撞裁剪，永远存活。
+#
+# 与 custom-ads.list 的区别：
+#   --extra        → 并入黑名单条目池，参与 delta 过滤（追加广告域）
+#   --extra-white  → 并入白名单守卫，不参与裁剪（追加直连域）
+#
+# 语义：强制 DOMAIN-SUFFIX（该域名 + 全部子域）。
+#       写 *.tange365.com 即放行 tange365.com 与其所有子域。
+#
+# ⚠️ 只改本文件即可。不要手改 mihomo-white-guard.list / surge-white-guard.list ——
+#    那两个文件是生成产物，重跑一次转换就会被完全覆盖。
+#
+# 现有条目与依据（2026-09-19 实测）
+#
+# *.tange365.com  相机类 App「小鲸看看」自身业务域（账户 / 设备 / 云存储同步）。
+#                 冷启动拉起的爱奇艺广告 SDK t7z.cupid.iqiyi.com 已被黑名单拦掉，
+#                 但 tange365.com 是功能域，必须直连，否则 App 异常。
+#
+*.tange365.com

@@ -51,29 +51,33 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profi
 
 `profiles/routing.conf` · `profiles/routing.min.conf`
 
-26 组 / 26 条规则。先按应用分，再按地区分。
+26 组 / 26 条规则。先按应用分，再按地区分。组序与 egern v2.5 对齐。
 
 | 层 | 组 | 选路 |
 |:---|:---|:---|
-| 🎯 总入口 | `Proxy` · `Smart` | 自动 |
-| 📡 订阅 | `Airport` | 订阅槽位 |
-| 🌏 地区 | `Hong Kong` · `USA` · `Japan` · `Taiwan` · `Singapore` · `Korea` · `Other Regions` | 按节点名正则筛 |
-| 💎 精选 | `MAX` | 低倍率节点 |
-| 🧩 应用 | 14 组（见下） | 手动 |
-| 🛑 开关 | `AD` | 手动 |
+| 🎯 总入口 | `Proxy` · `Smart` | `Proxy` 手动（首项 `MAX`）· `Smart` 自动 |
+| 🧩 应用 | 12 组（见下） | 手动，默认走 `Proxy` 全部节点 |
+| 📡 订阅 | `Airport` | 订阅槽位（隐藏） |
+| 🛑 开关 | `WeChat` · `AD` | 手动 |
+| 🌏 地区 | `Hong Kong` · `USA` · `Japan` · `Taiwan` · `Singapore` · `Korea` · `Other Regions` | 自动，按节点名正则筛 |
+| 💎 精选 | `MAX` | 自动，低倍率节点 |
+| 🌐 兜底 | `Final` | 手动（默认 `Proxy`） |
 
 **应用组的默认出口**
 
-| 应用 | 出口 |
-|:-----|:-----|
-| 🤖 `ChatGPT` · `Gemini` · `AI` | `Proxy` |
-| 🎭 `Claude` | 台湾 |
-| 🔎 `Google` | `Gemini` → `Proxy` |
-| 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | `Proxy` |
-| ✈️ `Telegram` · 🐦 `Twitter` | `Proxy` |
-| 🐙 `GitHub` | `Proxy` |
-| 🪟 `Microsoft` · 💚 `WeChat` | `DIRECT` |
-| 🌐 `Final` | `Proxy`（兜底，可改道） |
+每组都是 `select, include-other-group="Proxy"` —— 默认走 `Proxy` 的全部节点，面板上可随时改道。
+
+| 应用 | 默认 | 备注 |
+|:-----|:-----|:-----|
+| 🤖 `ChatGPT` · `Gemini` · `AI` | `Proxy` | |
+| 🎭 `Claude` | 中国台湾 | 首项 `Taiwan` |
+| 🔎 `Google` | `Gemini` → `Proxy` | 首项 `Gemini` |
+| 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | `Proxy` | |
+| ✈️ `Telegram` · 🐦 `Twitter` | `Proxy` | |
+| 🐙 `GitHub` | `Proxy` | |
+| 🪟 `Microsoft` | `DIRECT` | 首项 `DIRECT` |
+| 💚 `WeChat` | `DIRECT` | 首项 `DIRECT`，把微信从兜底里摘出来 |
+| 🌐 `Final` | `Proxy` | 兜底，可改道 |
 
 ---
 
