@@ -68,6 +68,7 @@ ALLOWED_DOMAINS = (
     "example.com", "example.net", "example.org",
     "cdn-relay.example.com",
     "connect.rom.miui.com",            # 连通性测试端点
+    "www.gstatic.com",                 # TCP 测速端点（性能探针，刻意境外）
     "raw.githubusercontent.com",       # 规则集地址
     "cdn.jsdelivr.net",                # 规则集地址
     "github.com", "api.github.com", "objects.githubusercontent.com",

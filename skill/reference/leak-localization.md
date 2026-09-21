@@ -123,14 +123,23 @@ python skill/scripts/audit_ruleset_content.py <profile> 2>&1 | grep -B1 -A3 'HIG
 ⚠️ **后者是最容易漏的** —— 它不在你的 profile 里，你本地的审计器看不见。
 必须下载规则集内容才能发现。
 
-### 2.4 一个容易忽略的持续性泄露面
+### 2.4 关于测试端点 —— **先确认它是不是泄露面**
 
 ```bash
 grep 'proxy-test-url\|internet-test-url' <profile>
 ```
 
-如果端点是境外域名（`gstatic.com` / `cp.cloudflare.com` 之类），
-那么**每个策略组每 5 分钟**都会产生一次境外域名解析。
+⚠️ **别急着下结论。** 官方 KB 明确：「走代理策略时…DNS 解析永远在代理服务器进行」，
+本地解析只在命中 DIRECT 时发生。所以：
+
+- 端点域名**只有在它落进 DIRECT 路径时**才产生本地解析；
+- 它是给 `smart` 打分的**性能探针**，不是泄露通道。
+
+选址是**性能取向**：`internet-test-url`（连通性）宜国内，
+`proxy-test-url`（打分）宜境外（含国际段才反映真实路径）。
+审计器 `check_6` 对境外端点**只报 LOW 提示**。
+
+> 这一条曾是本项目的**误报来源** —— 详见 `pitfalls.md` 坑 14。
 
 ---
 

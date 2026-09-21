@@ -45,7 +45,7 @@
 |:-----|:-----------|:-------|:----:|
 | `[Proxy]` 的 4 条节点 | `203.0.113.x` + `REPLACE_WITH_*` | 你的节点信息 | ✅ |
 | `[Proxy Group]` 的组成员 | `"Node-A"` … | 你的节点名 / 订阅组名 | ✅ |
-| 代理测试端点 | `connect.rom.miui.com` | 可改成你自己的 204 | ⬜ 可选 |
+| 测试端点（可选） | `internet-test-url` 国内 / `proxy-test-url` 境外 | 按你的取向换 | ⬜ 可选 |
 
 填完节点即可导入，无需其他改动。
 
@@ -113,9 +113,10 @@ Surge 的 DNS 泄露只有三条出口，配置把三条都堵上。
 
 - 🧭 `Proxy` · `smart` —— 主入口，承载 `Node-A` / `Node-B`，按真实首字节延迟 + 重传 + UDP 响应评分
 - 🤖 `AI` · `smart` —— AI 流量独立出口，承载 `Node-C` / `Node-D`，承接 `AI.list`
-- 🛑 `AD` · `select` —— 手动开关（`REJECT` / `DIRECT`），**不由任何规则引用**
+- 🛑 `AD` · `select` —— 独立手动开关（`REJECT` / `DIRECT`），不牵动规则引擎
 
-> ⚠️ `AD` 组只用于面板上手动切，**规则里的广告拦截写的是字面量 `REJECT`**。原因见 [`DetailsReadme` §1.3](DetailsReadme/DetailsReadme.md#13--proxy-group三个组与两个不能用组的地方)。
+> 📌 拦截动作走**字面量 `REJECT`**（为了拿到 `pre-matching` 的 DNS 阶段拦截能力），
+> `AD` 组则作为**独立的手动干预入口**保留 —— 这是刻意的分层。说明见 [`DetailsReadme` §13.3](DetailsReadme/DetailsReadme.md#133-ad-组的定位独立的手动开关)。
 
 ---
 

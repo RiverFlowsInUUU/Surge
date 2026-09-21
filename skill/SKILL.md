@@ -68,7 +68,7 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | 3 | `hijack-dns` 是否覆盖已知的知名硬编码解析器 | LOW |
 | 4 | `encrypted-dns-follow-outbound-mode` 是否为 `false` | HIGH |
 | 5 | `always-real-ip` 是否配置、`use-local-host-item-for-proxy` 是否为 `false` | HIGH / LOW |
-| 6 | `internet-test-url` / `proxy-test-url` / `proxy-test-udp` 的域名归属 | MEDIUM / LOW |
+| 6 | `internet-test-url` / `proxy-test-url` / `proxy-test-udp` 的域名归属（**提示性**） | LOW |
 | 7 | 策略组引用的节点 / 组是否存在 | HIGH |
 | 8 | 规则引用的策略是否可解析（`policy_index` 定位） | HIGH / MEDIUM |
 | 9 | 规则顺序：域名类在 IP 类之前、FINAL 在最后、REJECT 位置 | HIGH / MEDIUM |
@@ -97,7 +97,8 @@ encrypted-dns-follow-outbound-mode = false
 hijack-dns = 8.8.8.8:53, 8.8.4.4:53, 1.1.1.1:53, 1.0.0.1:53, 9.9.9.9:53, 208.67.222.222:53
 use-local-host-item-for-proxy = false
 test-timeout = 5
-proxy-test-url = http://connect.rom.miui.com/generate_204
+internet-test-url = http://connect.rom.miui.com/generate_204
+proxy-test-url = http://www.gstatic.com/generate_204
 proxy-test-udp = apple.com@1.1.1.1
 
 [Rule]
@@ -149,7 +150,7 @@ FINAL,Proxy,dns-failed
 | 报「规则引用了未定义的策略 `CN`」 | 审计器把 `GEOIP` 当成"无匹配值"类型，策略取到了 index 1 | `GEOIP` / `IP-GEOIP` / `ASN` 的策略恒在 index 2（`RULE-SET` 同理，index 1 是规则集标识） |
 | 冷启动抓包有明文 `:53` | `encrypted-dns-server` 里有主机名端点；或 `dns-server` 写了 `system` | 端点换 IP 字面量 |
 | 每个新域名首访卡一下 | `GEOIP,CN` 或其他 IP 规则缺 `no-resolve` | 全部加 `no-resolve`（注意同时补铁律 2） |
-| 测速时持续有境外解析 | `proxy-test-url` 用了境外端点（如 `gstatic.com`） | 换国内 204（如 `connect.rom.miui.com`） |
+| 端点选境内还是境外 | 是**性能取向**还是泄露问题？ | 它是**性能探针**：官方 KB 明确走代理时解析在代理服务器进行。`internet-test-url` 宜国内，`proxy-test-url` 宜境外（含国际段）。**别把境外端点当缺陷报** |
 | 游戏机 NAT 检测坏掉 | `always-real-ip` 缺游戏机主机名，或它们没被前置域名规则接住 | 补 `always-real-ip` + `DOMAIN-SUFFIX` 规则 |
 | 审计器把 `miui.com` 当境外域 | 国内域名判据只认 `.cn` 后缀 | 用显式后缀清单，见 `_surge_common.py` 的 `DOMESTIC_TEST_SUFFIXES` |
 | 审计器说「hijack-dns 只覆盖 6 个」 | 判据是"条数"，但 `:53` 地址空间无限、永远列不全 | 判据改成「还有多少**已知的**知名境外解析器没覆盖」 |

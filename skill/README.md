@@ -23,7 +23,7 @@ Agent 会自动加载。
 | `reference/checker.md` | 三个审计脚本的命令 + 12 项判据 + 判据演进史 |
 | `reference/ruleset-weight.md` | 规则集"重量"：按类型数条目 / 识破名字骗人 |
 | `reference/public-repo.md` | 公开模板仓库的交付物清单与维护方式 |
-| `scripts/check_surge_dns.py` | **profile 层审计**（清单 1–12）。端点是 IP 字面量吗、`dns-server` 是不是 `system`、IP 规则带 `no-resolve` 吗、策略名能解析吗、`pre-matching` 是不是字面量、规则顺序对不对 |
+| `scripts/check_surge_dns.py` | **profile 层审计**（清单 1–12）。端点是 IP 字面量吗、`dns-server` 是不是 `system`、IP 规则带 `no-resolve` 吗、策略名能解析吗、`pre-matching` 是不是字面量、规则顺序对不对（端点项为提示性 LOW，见坑 14） |
 | `scripts/audit_ruleset_content.py` | **规则集层审计**（远程内容）。下载全部被引用的远程规则集，数「缺 `no-resolve` 的 IP 条目」与「直连集合的域名条目总量」 |
 | `scripts/audit_routing_coverage.py` | **分流覆盖审计**。域名 → 命中规则 → 策略；17 个国内探针（**刻意混入非 `.cn`**）+ 8 个境外探针 + 8 个误杀探针 |
 | `scripts/_surge_common.py` | 共享逻辑（INI 解析 / 端点判据 / `policy_index`），**所有脚本从这里 import** |

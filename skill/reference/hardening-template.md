@@ -109,19 +109,30 @@ disable-geoip-db-auto-update = false
 手工构造的 mmdb 不一定带 MaxMind 官方签名，可能报警。保持自动更新开启；
 日志出现更新报错时改成 `true`（代价是库会变旧）。
 
-### 1.4 测试端点
+### 1.4 测试端点（**性能探针，不是泄露通道**）
 
 ```
 test-timeout = 5
 internet-test-url = http://connect.rom.miui.com/generate_204
-proxy-test-url = http://connect.rom.miui.com/generate_204
+proxy-test-url = http://www.gstatic.com/generate_204
 proxy-test-udp = apple.com@1.1.1.1
 ```
 
-⭐ **`proxy-test-url` 必须用国内端点或 IP 字面量。**
+⭐⭐ **先定性，再选址：`proxy-test-url` 是给 `smart` / `url-test` 打分的性能探针，
+不是泄露通道。** 官方 KB 明确「走代理策略时…DNS 解析永远在代理服务器进行」，
+本地只在命中 DIRECT 时解析。
 
-它对每个策略组**每 5 分钟跑一次**，是持续性动作。用境外端点（`gstatic.com` 之类）
-等于制造一个**必然发生的境外域名解析面**。
+所以**按用途分工**，别一律求境内：
+
+| 键 | 用途 | 建议 | 理由 |
+|:---|:-----|:-----|:-----|
+| `internet-test-url` | 连通性检测 | 国内 204 | 测的是「本机能不能上网」，国内端点更贴切 |
+| `proxy-test-url` | `smart` 打分 | **境外**（`gstatic.com`） | 测含国际段的真实路径，对选节点才有参考价值 |
+| `proxy-test-udp` | UDP 评分 | IP 字面量 | 无域名，不产生解析 |
+
+⚠️ **反面教材**：曾以"减少周期性解析面"为由把 `proxy-test-url` 改成境内 ——
+理由是错的（见 §7 自检清单）。**如果一个字段的职责是"测准"，就不要用
+"藏掉解析"去改它。**
 
 | | 境外端点 | 国内端点 |
 |:--|:---------|:---------|
@@ -301,8 +312,10 @@ RULE-SET,<ads.list>,REJECT,pre-matching,extended-matching
 DIRECT**（组被切走 / 成员动态变化），Surge 无法保证"一定拦得住"，于是
 **直接拒绝加载整份配置**。
 
-⇒ 这也是 `AD` 组「不由任何规则引用」的根因。**注意**：把 `AD` 切成 `DIRECT`
-**不会**关闭广告拦截，因为规则根本不经过它。想真正关掉，改规则那一行的策略。
+⇒ 这正是 `AD` 组被设计成「独立于拦截链路之外」的原因：拦截动作走字面量
+`REJECT`，`AD` 组作为**面板上独立的手动开关**保留 —— 刻意的分层，不是遗漏。
+**职责边界**：改默认拦截行为要改规则那一行；想让 `AD` 接管开关，把策略改成
+`AD` 并**一并去掉 `pre-matching`**（这是明确的取舍）。
 
 ---
 
@@ -436,7 +449,7 @@ localhost = server:system
 [ ] encrypted-dns-follow-outbound-mode = false
 [ ] hijack-dns 已配置
 [ ] use-local-host-item-for-proxy = false
-[ ] proxy-test-url 是国内域名或 IP 字面量
+[ ] proxy-test-url 按用途选址（打分宜境外 / 连通性宜国内），不作为泄露项检查
 [ ] 所有 IP 类规则带 no-resolve（含第三方规则集里的条目）
 [ ] FINAL 之前有域名体量足够的国内直连集（数域名条目，不是看名字）
 [ ] 白名单 DIRECT 在第一条 REJECT 之前

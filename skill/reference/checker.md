@@ -97,7 +97,7 @@ fi
 | 3 | `hijack-dns` | LOW / OK | 缺失 → **HIGH**。写 `*` 或 `0.0.0.0:53` → OK。否则算「**已知的**知名境外解析器里还有几个没覆盖」→ LOW（⚠️ **不是按条数判负**，见坑 6） |
 | 4 | `encrypted-dns-follow-outbound-mode` | **HIGH** / OK | `true` → HIGH（会成环 / 回退明文）；未设置或 `false` → OK |
 | 5 | `always-real-ip` / `use-local-host-item-for-proxy` | **HIGH** / LOW / OK | 缺 `always-real-ip` → LOW；`use-local-host-item-for-proxy = true` → **HIGH** |
-| 6 | 测试端点域名归属 | MEDIUM / OK / LOW | 逐个看 `internet-test-url` / `proxy-test-url` / `proxy-test-udp`：IP 字面量 → OK；国内域名 → OK；境外域名 → MEDIUM；缺失 → LOW |
+| 6 | 测试端点域名归属（**提示性**） | LOW / OK | 逐个看 `internet-test-url` / `proxy-test-url` / `proxy-test-udp`：IP 字面量 → OK；国内域名 → OK；境外域名 → **LOW 提示**（性能取向取舍，见坑 14）；缺失 → LOW。⚠️ **不计入风险等级** |
 | 7 | 策略组成员可解析 | **HIGH** / MEDIUM / OK | 空组 → HIGH；未知组类型 → MEDIUM；成员既不在 `[Proxy]` 也不是已知组 / 内置策略 → **HIGH**（Surge 会拒绝加载） |
 | 8 | 规则策略可解析 | **HIGH** / MEDIUM / OK | 用 `policy_index()` 定位策略字段；类型未识别或字段不足 → MEDIUM（跳过策略校验）；策略不在已知集合 → **HIGH** |
 | 9 | 规则顺序 | **HIGH** / MEDIUM / OK | 无 `FINAL` → HIGH；`FINAL` 不在最后 → MEDIUM；IP 类排在域名类之前 → **HIGH** |
@@ -329,6 +329,7 @@ DNS_KEYS = [
 | v2 | `check_3` 改为「未覆盖的**已知**知名解析器数」 | 判据**不可能被满足**，见坑 6 |
 | v1 | `check_6` 只认 `.cn` / `.com.cn` | 初版 |
 | v2 | `check_6` 加 `DOMESTIC_TEST_SUFFIXES` 显式清单 | `miui.com` 被误判为境外，见坑 7 |
+| v3 | `check_6` 境外端点从 MEDIUM 降为 **LOW 提示** | 它是性能探针不是泄露通道，见坑 14 |
 | v1 | `check_8` 策略取 `parts[1]` | 初版 |
 | v2 | 引入 `policy_index()` | `GEOIP` 把 `CN` 当策略 → 12 个假 HIGH，见坑 4 |
 | v3 | `policy_index()` 处理 `RULE-SET` | 索引 1 是规则集标识 → 又 12 个假 HIGH，见坑 5 |
