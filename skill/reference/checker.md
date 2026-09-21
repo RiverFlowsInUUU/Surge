@@ -103,7 +103,7 @@ fi
 | 9 | 规则顺序 | **HIGH** / MEDIUM / OK | 无 `FINAL` → HIGH；`FINAL` 不在最后 → MEDIUM；IP 类排在域名类之前 → **HIGH** |
 | 10 | `pre-matching` 的策略是字面量 | **HIGH** / LOW / OK | 无 `pre-matching` 规则 → LOW；有 `pre-matching` 但策略不是 `reject*` → **HIGH**；缺 `extended-matching` → LOW |
 | 11 | `always-real-ip` 被前置域名规则接住 | MEDIUM / LOW / OK | 本地类主机名（`*.lan` 等）不计数。未接住：若文件里有 `RULE-SET` → LOW（远程内容无法静态判定）；否则 → MEDIUM |
-| 12 | IP 类规则的 `no-resolve` | **HIGH** / LOW / OK | 无 IP 类规则 → OK；任一带缺 → **HIGH**；`FINAL` 缺 `dns-failed` → LOW |
+| 12 | IP 类规则的 `no-resolve` | MEDIUM / LOW / OK | 无 IP 类规则 → OK；任一带缺 → **MEDIUM**（⚠️ 不是泄露补丁：走代理时解析在代理端；缺它只是多一次冗余解析。真正风险是连带——补它必须同时有域名类国内直连集）；`FINAL` 缺 `dns-failed` → LOW |
 
 ### 4.1 `policy_index()` —— 最容易写错的一处
 

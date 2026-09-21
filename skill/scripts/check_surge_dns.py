@@ -494,9 +494,13 @@ def check_12_no_resolve(sections):
            if not any(x.strip().lower() == "no-resolve" for x in p[2:])]
     if bad:
         for lineno, parts in bad:
-            add(HIGH, 12, f"第 {lineno} 行的 IP 类规则缺少 no-resolve",
-                " → ".join(parts) + "；不带 no-resolve 的 IP 规则会**触发 DNS 解析**，"
-                "每个走到它的域名都要被本地解析一次")
+            # ⚠️ 判级是 MEDIUM 不是 HIGH：走代理策略时解析本就在代理服务器进行
+            #    （官方 KB），缺 no-resolve 只是**多触发一次冗余本地解析**，
+            #    不是泄露补丁缺失。真正要防的是它同时带来的连带风险（见 check_13/14）。
+            add(MEDIUM, 12, f"第 {lineno} 行的 IP 类规则缺少 no-resolve",
+                " → ".join(parts) + "；匹配时会额外触发一次本地解析。"
+                "注意：这不是泄露补丁 —— 走代理时解析在代理服务器进行；"
+                "但**补上它必须同时确认有域名类国内直连集**，否则国内域名会走代理")
     else:
         add(OK, 12, f"{len(ip_rules)} 条 IP 类规则全部带 no-resolve")
     # FINAL 的 dns-failed

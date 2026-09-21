@@ -74,7 +74,7 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | 9 | 规则顺序：域名类在 IP 类之前、FINAL 在最后、REJECT 位置 | HIGH / MEDIUM |
 | 10 | 带 `pre-matching` 的规则策略是否为**字面量** REJECT 族 | HIGH |
 | 11 | `always-real-ip` 主机名是否被前置域名规则接住 | MEDIUM / LOW |
-| 12 | 所有 IP 类规则是否带 `no-resolve`；FINAL 是否带 `dns-failed` | HIGH / LOW |
+| 12 | 所有 IP 类规则是否带 `no-resolve`；FINAL 是否带 `dns-failed` | MEDIUM / LOW |
 
 另有三个**不在清单里但必须查**的东西（需要联网，见 `reference/checker.md`）：
 
