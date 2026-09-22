@@ -2,9 +2,7 @@
 
 # 🛡️ Surge 配置模板
 
-**🪶 懒人版 · 🧭 分流版**
-
-*不绑节点，不绑订阅 · 让 DNS 无处可漏*
+*让 DNS 无处可漏*
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
@@ -43,7 +41,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 | 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
 | ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
 | 🛑 `AD` | ✅ | ✅ |
-| 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan` · 🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
+| 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan`<br>🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
 | 💧 `MAX` | - | ✅ |
 | 🌐 `Final` | ✅ | ✅ |
 
