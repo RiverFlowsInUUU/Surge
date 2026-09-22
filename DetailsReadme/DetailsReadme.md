@@ -47,8 +47,8 @@ surge/
     └── tests/                    # 6 阶段回归 + 4 个 fixture + 链接检查
 ```
 
-**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 13 条，全量一个出口），
-`routing` 是分流版（26 组 / 26 条，按应用 + 按地区）。选一份用，不要叠加。
+**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 14 条，全量一个出口），
+`routing` 是分流版（26 组 / 27 条，按应用 + 按地区）。选一份用，不要叠加。
 分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
 [`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
 
@@ -527,6 +527,7 @@ DOMAIN-SUFFIX,xboxlive.com,Proxy
 |:-------|:----:|:-----|:-----|
 | `surge-white-guard.list` | 43 | 纯域名 | jinx-ads-rules |
 | `surge-ads.list` | 3889 | 纯域名 | jinx-ads-rules |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
 | `AI.list` | 49 | 纯域名 | ACL4SSR（**钉 commit**） |
 | `private.txt` | 130 | 域名 + 可能含 IP | Loyalsoldier |
 | `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
@@ -551,7 +552,38 @@ RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Rul
 
 代价：上游更新了不会自动跟进。要更新得手动换 hash。
 
-### 11.4 为什么 `direct.txt` 是主承重墙
+### 11.4 广告拦截为什么是两条清单，且地址必须用 `-RULE-SET` 版
+
+**① 两条并列，不是替换。** 顺序是 `白名单 → jinx-ads-rules → AWAvenue → 应用分流`，
+与 egern 的结构一致。两条同策略同参数（`REJECT,pre-matching,extended-matching`）——
+Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3：
+只有字面量 REJECT 族才能吃到 `pre-matching`（组不行）。
+
+**② 收益按「净新增覆盖」算，不是按总条数。** 实测（2026-09-22）：
+
+| 指标 | 值 |
+|:-----|:---|
+| AWAvenue 条目数 | 965 |
+| 已被 jinx 的后缀 / 通配规则覆盖 | 884 |
+| **净新增覆盖** | **81（8.4%）** |
+
+**③ 地址必须用 `...-RULE-SET.list`。** 上游同仓提供两个变体，**格式不同、不能互换**：
+
+| 文件 | 条数 | 内容形式 | 对应 Surge 类型 |
+|:-----|:----:|:---------|:----------------|
+| `AWAvenue-Ads-Rule-Surge.list` | 961 | **裸域名**（`.8le8le.com`，前导点） | `DOMAIN-SET` |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | **965** | `DOMAIN,xxx` 规则行 | **`RULE-SET`** ✅ |
+
+本模板用的是 `RULE-SET` ⇒ 必须取后者。RULE-SET 版还**多 4 条**（那 4 条是无法写成
+裸域名的 `DOMAIN-KEYWORD` / `DOMAIN-SUFFIX`）。换成裸域名版，Surge 会拿 961 行
+「前导点域名」当规则行解析 —— 格式不匹配。（egern 于 2026-09-22 修过同一问题。）
+
+**④ 顺序是这条的命门。** AWAvenue 会命中白名单里的 **10 条**功能域
+（`jpush.cn` / `appcfg.v.qq.com` / `p.l.qq.com` / 微信登录 `apd-pcdnwx*` / 字节 `tnc3-*`）——
+白名单留在最前面才拦得住这 10 条误杀。同理，两条清单**都不能**挪到
+`direct.txt` / `GEOIP,CN` 之后，否则永远轮不到。
+
+### 11.5 为什么 `direct.txt` 是主承重墙
 
 见 §12。
 
@@ -713,35 +745,36 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**。
 
-**`lazy.conf` —— 13 条**
+**`lazy.conf` —— 14 条**
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
-| 1 | `RULE-SET,…,surge-white-guard.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设 |
-| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
-| 3 | `RULE-SET,…,AI.list` | `AI` | `update-interval=86400,no-resolve` | 纯域名集，显式 `no-resolve` |
-| 4 | `DOMAIN-SUFFIX,nintendo.net` | `Proxy` | — | 见 §9.3 |
-| 5 | `DOMAIN-SUFFIX,playstation.net` | `Proxy` | — | 同上 |
-| 6 | `DOMAIN-SUFFIX,xboxlive.com` | `Proxy` | — | 同上 |
-| 7 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
-| 8 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.4 |
-| 9 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
-| 10 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
-| 11 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
-| 12 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
-| 13 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
+| 1 | `RULE-SET,…,surge-white-guard.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
+| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
+| 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 egern 对齐，见 §11.4 |
+| 4 | `RULE-SET,…,AI.list` | `AI` | `update-interval=86400,no-resolve` | 纯域名集，显式 `no-resolve` |
+| 5 | `DOMAIN-SUFFIX,nintendo.net` | `Proxy` | — | 见 §9.3 |
+| 6 | `DOMAIN-SUFFIX,playstation.net` | `Proxy` | — | 同上 |
+| 7 | `DOMAIN-SUFFIX,xboxlive.com` | `Proxy` | — | 同上 |
+| 8 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
+| 9 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.1 |
+| 10 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
+| 11 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
+| 12 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
+| 13 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
+| 14 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing.conf` —— 26 条（三处不同）**
+**`routing.conf` —— 27 条（三处不同）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
-| 1–2 | 白名单 / 广告拦截 | `DIRECT` / `REJECT` | 同 lazy |
-| **3–7** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
-| **8–12** | 媒体社交：`Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` | 同名组 | **新增 5 条** |
-| **13–15** | 开发系统：`GitHub` / `Google` / `Microsoft` | 同名组 | **新增 3 条** |
-| **16** | 即时通讯：`WeChat` | `WeChat` | **新增 1 条** |
-| 17–25 | 游戏机 3 条 / SYSTEM / Apple / LAN / private / direct / GEOIP | — | 同 lazy |
-| **26** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+| 1–3 | 白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
+| **4–8** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
+| **9–13** | 媒体社交：`Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` | 同名组 | **新增 5 条** |
+| **14–16** | 开发系统：`GitHub` / `Google` / `Microsoft` | 同名组 | **新增 3 条** |
+| **17** | 即时通讯：`WeChat` | `WeChat` | **新增 1 条** |
+| 18–26 | 游戏机 3 条 / SYSTEM / Apple / LAN / private / direct / GEOIP | — | 同 lazy |
+| **27** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
 
 > 📌 **三处顺序要点**：
 > 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
@@ -750,7 +783,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 >    排到后面就接不到它，"应用的代理取向"直接失效。
 > 3. 应用段整体排在 Apple / 内网 / 国内直连段**之前** —— 同样是"更具体的规则在前"。
 
-### 14.4 为什么 Apple 规则集必须用 `No_Resolve` 版
+### 14.1 为什么 Apple 规则集必须用 `No_Resolve` 版
 
 这是 egern 项目实测踩出来的坑，直接搬过来：
 
@@ -769,19 +802,19 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 > 📌 当年 egern 把 20 个远程规则集逐个下载核对过：**只有 `Apple_All.list` 存在这个缺陷**。
 > 本项目的 `audit_ruleset_content.py` 会把这条检查自动跑一遍。
 
-### 14.1 铁律（两版通用）
+### 14.2 铁律（两版通用）
 
 **白名单(DIRECT) → 黑名单(REJECT) → 常规分流（`direct.txt` / `GEOIP,CN`）**
 
 REJECT 绝不能排在 `direct.txt` / `GEOIP,CN` 之后 —— 那等于白加，
 因为国内广告域名会先被 `direct.txt` 接走。
 
-### 14.2 为什么 IP 类规则必须放最后
+### 14.3 为什么 IP 类规则必须放最后
 
 IP 类规则需要有已解析的地址。放在所有域名规则之后，使走代理 / 被广告拦截 /
 国内直连的流量都**不必做本地 DNS 查询**。
 
-### 14.3 `FINAL` 的 `dns-failed`
+### 14.4 `FINAL` 的 `dns-failed`
 
 万一规则求值因 DNS 失败而中断，用代理策略而不是让请求直接失败。
 走代理的域名由节点远端解析 —— 所以这一条既修好了失败，也**避免了一次明文本地查询**。

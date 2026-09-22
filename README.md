@@ -36,7 +36,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 
 `profiles/lazy.conf` · `profiles/lazy.min.conf`
 
-3 组 / 13 条规则。全部流量走一个出口。
+3 组 / 14 条规则。全部流量走一个出口。
 
 | | |
 |:--|:--|
@@ -51,7 +51,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 
 `profiles/routing.conf` · `profiles/routing.min.conf`
 
-26 组 / 26 条规则。先按应用分，再按地区分。组序与 egern v2.5 对齐。
+26 组 / 27 条规则。先按应用分，再按地区分。组序与 egern v2.5 对齐。
 
 | 层 | 组 | 选路 |
 |:---|:---|:---|
@@ -88,7 +88,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 | # | 规则 | 🪶 懒人版 | 🧭 分流版 |
 |:-:|:-----|:----------|:----------|
 | 🛡️ | 白名单 | `surge-white-guard.list` → `DIRECT` | 同左 |
-| 🚫 | 广告拦截 | `surge-ads.list` → `REJECT` | 同左 |
+| 🚫 | 广告拦截 | `surge-ads.list` + `AWAvenue-Ads-Rule` → `REJECT` | 同左 |
 | 🤖 | 按应用 | `AI.list` → `AI` | 13 条，见下 |
 | 🎮 | 游戏机主机名 | `nintendo.net` · `playstation.net` · `xboxlive.com` → `Proxy` | 同左 |
 | 🍎 | Apple 服务 | `SYSTEM` + `Apple_All_No_Resolve.list` → `DIRECT` | 同左 |
@@ -96,6 +96,11 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 | 🇨🇳 | 国内域名 | `direct.txt` → `DIRECT` | 同左 |
 | 🌏 | 国内 IP | `GEOIP,CN` → `DIRECT` | 同左 |
 | 🌐 | 兜底 | `Proxy` | `Final` |
+
+> 🚫 **广告拦截是两条并列清单**（与 egern 的结构一致）：先 `jinx-ads-rules` 的黑名单，
+> 再 `AWAvenue-Ads-Rule`，两条同策略、同参数（`REJECT,pre-matching,extended-matching`）。
+> AWAvenue 相对 jinx **净新增 81 条（8.4%）**未收录广告域；其中 10 条与白名单重叠，
+> ⚠️ **所以白名单必须留在两条清单之前**，顺序不可调整。
 
 **分流版的应用规则**
 
@@ -152,6 +157,7 @@ surge/
 ## 📚 规则来源
 
 - 🛑 [jinx-ads-rules](https://github.com/RiverFlowsInUUU/jinx-ads-rules) —— 广告拦截 · 白名单
+- 🍂 [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) —— 广告拦截（第二条，**RULE-SET 版**）
 - 🧩 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) —— 应用规则集
 - 🤖 [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR) —— `AI.list`
 - 🇨🇳 [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) —— `direct.txt` · `private.txt`

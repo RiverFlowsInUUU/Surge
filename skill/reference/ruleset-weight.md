@@ -45,11 +45,12 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 |:-------|:----:|:----:|:--:|:---------------------:|
 | `surge-white-guard.list` | 43 | 43 | 0 | 0 |
 | `surge-ads.list` | 3889 | 3889 | 0 | 0 |
+| `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 965 | 0 | 0 |
 | `AI.list` | 49 | 49 | 0 | 0 |
 | `private.txt` | 130 | 130 | 0 | 0 |
 | `direct.txt` | 111169 | 111169 | 0 | 0 |
 
-**五份加起来 IP 条目为 0** —— 所以本项目的 `no-resolve` 风险主要来自
+**六份加起来 IP 条目为 0** —— 所以本项目的 `no-resolve` 风险主要来自
 「将来换规则集」，而不是当下。
 
 ⚠️ 这意味着 `audit_ruleset_content.py` 的判据 A（缺 `no-resolve` 的 IP 条目）
@@ -67,23 +68,32 @@ python skill/scripts/audit_ruleset_content.py profiles/lazy.conf
 输出里每条规则集都有：
 
 ```
-── 第 190 行 · surge-ads.list （新下载） → REJECT
+── 第 189 行 · surge-ads.list （新下载） → REJECT
    共 3889 条：域名类 3889 / IP 类 0 / 其他 0
    域名类型：{'DOMAIN-SUFFIX': 3740, 'DOMAIN-WILDCARD': 149}
+
+── 第 206 行 · AWAvenue-Ads-Rule-Surge-RULE-SET.list （新下载） → REJECT
+   共 965 条：域名类 965 / IP 类 0 / 其他 0
+   域名类型：{'DOMAIN': 949, 'DOMAIN-SUFFIX': 12, 'DOMAIN-KEYWORD': 4}
 ```
 
 末尾还有直连集合的汇总：
 
 ```
 直连（DIRECT）规则集的域名条目统计：
-   surge-white-guard.list                      域名     43 / IP      0
-   private.txt                                 域名    130 / IP      0
-   direct.txt                                  域名 111169 / IP      0
+   surge-white-guard.list                       域名     43 / IP      0
+   Apple_All_No_Resolve.list                    域名   1567 / IP     13
+   private.txt                                  域名    130 / IP      0
+   direct.txt                                   域名 111169 / IP      0
 
-✅ 直连集合共 111342 条域名条目 —— 足以接住国内域名
+✅ 直连集合共 112909 条域名条目 —— 足以接住国内域名
 ```
 
 加 `--show-domestic` 打印明细，加 `--force` 忽略缓存重下。
+
+> ⚠️ **读数会被缓存带偏**：默认缓存在系统临时目录（`<tmp>/surge-ruleset-cache`），
+> **跨会话保留**。上游改过条目后，不带 `--force` 会一直报旧条数。
+> 对不上就加 `--force` 重跑一次再下结论 —— 别把旧缓存读数当成上游漂移。
 
 ---
 

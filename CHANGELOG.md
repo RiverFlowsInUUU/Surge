@@ -6,6 +6,29 @@
 
 ## 2026-09-22
 
+### 新增
+
+- 🚫 **广告拦截补第二条清单 `AWAvenue-Ads-Rule`** —— 此前本仓只有 `jinx-ads-rules`
+  一条黑名单（姊妹仓 `egern` 是**两条并列**），本次补齐，**两份配置的两种形态共 4 个文件**
+  均已加入：`lazy.conf` / `lazy.min.conf` / `routing.conf` / `routing.min.conf`。
+  - 📍 **位置**：紧跟 `jinx` 那条之后、`AI.list` 之前 —— 与 egern 的相对顺序一致
+    （`白名单 → jinx → AWAvenue → 应用分流`）。规则数 `13 → 14`（lazy）、`26 → 27`（routing）。
+  - 🔧 **策略与参数同 jinx**：`REJECT,pre-matching,extended-matching`。
+    本仓的广告拦截走**字面量 `REJECT`** 而非 `AD` 组（理由见 `DetailsReadme` §13.3），
+    所以这里同样不指向 `AD` 组。
+  - ⚠️ **地址用的是 `...-RULE-SET.list`（965 条），不是 `...-Surge.list`（961 条）** ——
+    后者是**裸域名**（`.8le8le.com`）对应 `DOMAIN-SET` 类型，与本仓消费的 `RULE-SET` 不匹配。
+  - 📊 **收益按「净新增覆盖」量化**：AWAvenue 965 条中 **884 条**已被 jinx 的后缀 / 通配
+    规则覆盖，**净新增 81 条（8.4%）**。
+  - ✅ **规则集本体已核对**：DOMAIN 949 / DOMAIN-SUFFIX 12 / DOMAIN-KEYWORD 4，
+    **100% 域名类**，无 IP-CIDR / URL-REGEX / USER-AGENT ⇒ `pre-matching` 安全。
+  - ⚠️ **顺序警告（已写进配置注释）**：AWAvenue 会命中白名单里的 **10 条**功能域
+    （`jpush.cn` / `appcfg.v.qq.com` / `p.l.qq.com` / 微信登录 `apd-pcdnwx*` / 字节 `tnc3-*`）——
+    白名单必须留在两条清单**之前**；两条清单也都不能落到 `direct.txt` / `GEOIP,CN` 之后。
+  - 📝 同步文档读数与清单：`README`（规则顺序表 + 规则来源）、`DetailsReadme` §11.1 引用清单 /
+    新增 §11.4、§14 规则逐条表、`docs/04` §4、`docs/07` §3.3、`docs/09`、`docs/10`、
+    `docs/11` §1 / §5、`skill/reference/hardening-template.md`。
+
 ### 变更
 
 - 🏷️ **项目定位调整** —— 本仓交付的是**两份模板**（`lazy` / `routing`），
@@ -26,6 +49,13 @@
     → **`{'DOMAIN-SUFFIX': 3740, 'DOMAIN-WILDCARD': 149}`**
   - 核查确认本仓**从无差集版引用**（`delta` / `差集` 零命中），订阅地址不变
   - ⚠️ 本仓「完整版」指**带注释的 profile**（与 `.min` 相对），与上游那个同名词**无关**，未动
+
+### 修复
+
+- 🐛 **`DetailsReadme` §14 小节编号与物理顺序错位** —— 「为什么 Apple 规则集必须用
+  `No_Resolve` 版」那节编号是 `§14.4`，却排在 `§14.1` 铁律**之前**。按物理顺序重编：
+  `§14.1` Apple / `§14.2` 铁律 / `§14.3` IP 类规则 / `§14.4` `FINAL`；
+  并把 §14 的规则逐条表里指向 Apple 的引用 `§14.4` 同步改指 `§14.1`（全仓仅此 1 处引用）。
 
 ---
 
