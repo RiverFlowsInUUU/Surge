@@ -51,7 +51,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 
 `profiles/routing.conf` · `profiles/routing.min.conf`
 
-26 组 / 27 条规则。先按应用分，再按地区分。组序与 Egern v2.5 对齐。
+26 组 / 27 条规则。先按应用分，再按地区分。
 
 | 层 | 组 | 选路 |
 |:---|:---|:---|
