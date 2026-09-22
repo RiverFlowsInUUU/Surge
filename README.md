@@ -127,15 +127,16 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 
 ---
 
-## 🌐 防泄露原理
+## 🌐 DNS 防泄漏
 
-明文 `UDP:53` 只有三条出口。
-
-| 出口 | 机制 | 堵法 |
-|:----:|:-----|:-----|
-| 🚪 引导解析 | DNS 端点写成主机名时，必须先明文解析一次 | 端点写 IP 字面量 |
-| 🚪 旁路设备 | 忽略 Surge DNS 的设备直接发明文 `:53` | `hijack-dns` 接管 |
-| 🚪 规则触发解析 | 不带 `no-resolve` 的 IP 规则会主动发起解析 | IP 类规则一律带 `no-resolve` |
+| | |
+|:--|:--|
+| 🚫 设备硬编码的明文 `:53` | `hijack-dns` 接管 —— HomePod / Apple TV / 智能音箱这类无视 DNS 设置的设备 |
+| 🔐 解析通道 | 加密 DNS 全程接管；引导解析器显式写死，不落到运营商 DHCP |
+| 🧭 规则匹配 | IP 类规则全部 `no-resolve`，不为匹配额外发起解析 |
+| 🔒 DoH 连接 | 固定直连、不跟随代理链，启动期不成环 |
+| ✂️ 远端解析 | 走代理的域名由节点侧解析，本地不留答案 |
+| 📋 审计读数 | 自带审计脚本 **0 high / 0 medium** · 路由覆盖 **33/33** |
 
 ---
 
