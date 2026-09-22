@@ -8,110 +8,59 @@
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
-[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
+[![Rules](https://img.shields.io/badge/Rules-14%20%7C%2027-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
 </div>
 
-## 📥 两份配置
+## 📥 两全其美，皆合心意
 
-🪶 **懒人版** · 一个出口
+🪶 **懒人版** · 至简 · 省心
 
 ```
 https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/lazy.min.conf
 ```
 
-🧭 **分流版** · 按应用 + 按地区
+🧭 **分流版** · 可控 · 随心
 
 ```
 https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.min.conf
 ```
 
-选中一条，点右上角复制 → Surge **配置 → 从 URL 下载** → 粘贴。
+---
+
+## 🧭 井然有序
+
+两版的分组，自上而下：第一列为分流版的组（每项配图标），第二列懒人版有则 ✅、无则 `-`，第三列分流版全覆盖 ✅。
+
+| 组 | 🪶 懒人版 | 🧭 分流版 |
+|:---|:---:|:---:|
+| 🚀 `Proxy` | ✅ | ✅ |
+| ⚡ `Smart` | - | ✅ |
+| 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | ✅ | ✅ |
+| 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | - | ✅ |
+| 🐙 `GitHub` · 🔎 `Google` · 🪟 `Microsoft` | - | ✅ |
+| ✈️ `Telegram` · 🐦 `Twitter` · 💚 `WeChat` | - | ✅ |
+| 🛑 `AD` | ✅ | ✅ |
+| 🇭🇰 `Hong Kong` · 🇺🇸 `USA` · 🇯🇵 `Japan` · 🇨🇳 `Taiwan` · 🇸🇬 `Singapore` · 🇰🇷 `Korea` · 🇦🇶 `Other Regions` | - | ✅ |
+| 💧 `MAX` | - | ✅ |
+| 🌐 `Final` | ✅ | ✅ |
+
+> 🔍 选路、地区筛法与规则顺序见 [`docs/11`](docs/11-分流版设计.md)；带注释的原始文件见 [`profiles/`](profiles/)。
 
 ---
 
-## 🪶 懒人版
-
-`profiles/lazy.conf` · `profiles/lazy.min.conf`
-
-3 组 / 14 条规则。全部流量走一个出口。
+## 🌐 隐私至上 · 无 DNS 泄露
 
 | | |
 |:--|:--|
-| ✈️ 节点 | `Node-A` ~ `Node-D`，4 条占位 |
-| 🧭 `Proxy` | 主出口，按首字节延迟 + 重传评分选点 |
-| 🤖 `AI` | AI 流量独立出口 |
-| 🛑 `AD` | 手动开关（`REJECT` / `DIRECT`） |
-
----
-
-## 🧭 分流版
-
-`profiles/routing.conf` · `profiles/routing.min.conf`
-
-26 组 / 27 条规则。先按应用分，再按地区分。
-
-| 层 | 组 | 选路 |
-|:---|:---|:---|
-| 🎯 总入口 | `Proxy` · `Smart` | `Proxy` 手动（首项 `MAX`）· `Smart` 自动 |
-| 🧩 应用 | 13 组（见下） | 手动；多数默认走 `Proxy`，`Microsoft` · `WeChat` 首项 `DIRECT` |
-| 📡 订阅 | `Airport` | 订阅槽位（隐藏） |
-| 🛑 开关 | `AD` | 手动，独立于规则链路 |
-| 🌏 地区 | `Hong Kong` · `USA` · `Japan` · `Taiwan` · `Singapore` · `Korea` · `Other Regions` | 自动，按节点名正则筛 |
-| 💎 精选 | `MAX` | 自动，低倍率节点 |
-| 🌐 兜底 | `Final` | 手动（默认 `Proxy`） |
-
-**应用组的默认出口**
-
-每组都是 `select, include-other-group="Proxy"` —— 默认走 `Proxy` 的全部节点，面板上可随时改道。
-
-| 应用 | 默认 | 备注 |
-|:-----|:-----|:-----|
-| 🤖 `ChatGPT` · `Gemini` · `AI` | `Proxy` | |
-| 🎭 `Claude` | 中国台湾 | 首项 `Taiwan` |
-| 🔎 `Google` | `Gemini` → `Proxy` | 首项 `Gemini` |
-| 🎵 `Spotify` · 🎶 `YouTubeMusic` · ▶️ `YouTube` | `Proxy` | |
-| ✈️ `Telegram` · 🐦 `Twitter` | `Proxy` | |
-| 🐙 `GitHub` | `Proxy` | |
-| 🪟 `Microsoft` | `DIRECT` | 首项 `DIRECT` |
-| 💚 `WeChat` | `DIRECT` | 首项 `DIRECT`，把微信从兜底里摘出来 |
-| 🌐 `Final` | `Proxy` | 兜底，可改道 |
-
----
-
-## 📋 分流顺序
-
-自上而下匹配，第一条命中即决定去向。
-
-| # | 匹配什么 | 🪶 懒人版 | 🧭 分流版 |
-|:-:|:-----|:----------|:----------|
-| 🛡️ | 白名单域名 | 直连 | 同左 |
-| 🚫 | 广告域名 | 拦截 | 同左 |
-| 🤖 | 按应用 | AI 服务 → `AI` | 13 类应用各自成组 |
-| 🎮 | 游戏机主机名 | `Proxy` | 同左 |
-| 🍎 | Apple 服务 | 直连 | 同左 |
-| 🏠 | 内网 | 直连 | 同左 |
-| 🇨🇳 | 国内域名 | 直连 | 同左 |
-| 🌏 | 国内 IP | 直连 | 同左 |
-| 🌐 | 其余全部 | `Proxy` | `Final` |
-
-> 🚫 **广告拦截由两条并列清单承担**，同策略、同参数。
-> ⚠️ **白名单必须排在这两条之前**，顺序不可调整。
-
----
-
-## 🌐 DNS 防泄漏
-
-| | |
-|:--|:--|
-| 🚫 设备硬编码的明文 `:53` | `hijack-dns` 接管 —— HomePod / Apple TV / 智能音箱这类无视 DNS 设置的设备 |
-| 🔐 解析通道 | 加密 DNS 全程接管；引导解析器显式写死，不落到运营商 DHCP |
-| 🧭 规则匹配 | IP 类规则全部 `no-resolve`，不为匹配额外发起解析 |
-| 🔒 DoH 连接 | 固定直连、不跟随代理链，启动期不成环 |
-| ✂️ 远端解析 | 走代理的域名由节点侧解析，本地不留答案 |
-| 📋 审计读数 | 自带审计脚本 **0 high / 0 medium** · 路由覆盖 **33/33** |
+| 🚫 盲区设备 | 不识 DNS 的设备也被 `hijack-dns` 接管，明文 `:53` 无处可逃 |
+| 🔐 加密通道 | 解析全程加密 DNS，不落入运营商 DHCP |
+| 🧭 规则克制 | IP 规则一律 `no-resolve`，只为匹配、不额外发问 |
+| 🔒 闭环连接 | `DoH` 直连、不跟代理链，启动不成环 |
+| ✂️ 远端解析 | 代理域名交节点解析，本地不留答案 |
+| 📋 自检读数 | 审计 **0 高危 / 0 中危**，路由 **33/33** |
 
 ---
 
