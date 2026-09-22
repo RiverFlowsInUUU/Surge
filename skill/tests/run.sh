@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Surge 审计脚本回归测试 —— 五阶段，退出码非 0 即失败。
+# Surge 审计脚本回归测试 —— 六阶段，退出码非 0 即失败。
 #
 #   阶段 1 · DNS 面 fixture 回归
 #     把 skill/tests/ 的 3 个 fixture 喂给 check_surge_dns.py（3 个断言）。

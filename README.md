@@ -58,16 +58,10 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 | 🎯 总入口 | `Proxy` · `Smart` | `Proxy` 手动（首项 `MAX`）· `Smart` 自动 |
 | 🧩 应用 | 13 组（见下） | 手动；多数默认走 `Proxy`，`Microsoft` · `WeChat` 首项 `DIRECT` |
 | 📡 订阅 | `Airport` | 订阅槽位（隐藏） |
-| 🛑 开关 | `AD` | 手动，**不被规则引用** |
+| 🛑 开关 | `AD` | 手动，独立于规则链路 |
 | 🌏 地区 | `Hong Kong` · `USA` · `Japan` · `Taiwan` · `Singapore` · `Korea` · `Other Regions` | 自动，按节点名正则筛 |
 | 💎 精选 | `MAX` | 自动，低倍率节点 |
 | 🌐 兜底 | `Final` | 手动（默认 `Proxy`） |
-
-> 📌 **`WeChat` 为什么不算「开关」**：它在 `[Proxy Group]` 里的位置（`Airport` 之后、`AD` 之前）
-> 是随 Egern v2.5 的**组序**，属于**位置分节**而不是功能归类 —— 该组被
-> `RULE-SET,…,WeChat.list` 引用、首项 `DIRECT`，功能上属**应用组**，故上表计入 🧩 应用（13 组）。
-> 全仓唯一的开关是 `AD`：它**不被任何规则引用**，只作面板上的人工干预入口（见 `DetailsReadme` §13.3）。
-> 配置里的分节注释写的是「③ 订阅槽位 + 开关」，也是按位置切的。
 
 **应用组的默认出口**
 
@@ -103,10 +97,9 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 | 🌏 | 国内 IP | `GEOIP,CN` → `DIRECT` | 同左 |
 | 🌐 | 兜底 | `Proxy` | `Final` |
 
-> 🚫 **广告拦截是两条并列清单**（与 Egern 的结构一致）：先 `Jinx` 的黑名单，
-> 再 `AWAvenue-Ads-Rule`，两条同策略、同参数（`REJECT,pre-matching,extended-matching`）。
-> AWAvenue 相对 Jinx **净新增 81 条（8.4%）**未收录广告域；其中 10 条与白名单重叠，
-> ⚠️ **所以白名单必须留在两条清单之前**，顺序不可调整。
+> 🚫 **广告拦截是两条并列清单**：先 `Jinx` 黑名单，再 `AWAvenue-Ads-Rule`，
+> 两条同策略、同参数（`REJECT,pre-matching,extended-matching`）。
+> ⚠️ **白名单必须排在这两条之前**，顺序不可调整。
 
 **分流版的应用规则**
 
