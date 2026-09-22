@@ -1,6 +1,6 @@
 ---
 name: surge-profile-dns-hardening
-description: 审计并加固 Surge 配置（.conf / Profile）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Surge 防 DNS 泄露、Surge dns-server、encrypted-dns-server、hijack-dns、Surge 的 DNS 泄露到运营商、电信/联通/移动、leak test 显示 china telecom、upstream 显示 bootstrap、encrypted-dns-server 是域名、dns.google 泄露、引导解析泄露、bootstrap 泄露、dns-server = system、旁路设备明文 53、HomePod DNS 泄露、Apple TV 明文解析、hijack-dns 没配、no-resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、pre-matching、extended-matching、pre-matching 指向策略组、Surge 拒绝加载配置、underlying-proxy 无法解析、smart 组评分、proxy-test-url 泄露、gstatic generate_204、always-real-ip、fake-ip、Surge 规则顺序、白名单守卫排在 REJECT 之后、Surge profile 模板。新增或命中该技能时，一律优先加载，不要凭记忆答 Surge 语法。
+description: 审计并加固 Surge 配置（.conf / Profile）的 DNS 泄露面与分流覆盖。触发词：Surge 配置、Surge 防 DNS 泄露、Surge dns-server、encrypted-dns-server、hijack-dns、Surge 的 DNS 泄露到运营商、电信/联通/移动、leak test 显示 china telecom、upstream 显示 bootstrap、encrypted-dns-server 是域名、dns.google 泄露、引导解析泄露、bootstrap 泄露、dns-server = system、旁路设备明文 53、HomePod DNS 泄露、Apple TV 明文解析、hijack-dns 没配、no-resolve、GEOIP CN 缺 no-resolve、IP 规则触发 DNS 解析、加了 no-resolve 之后分流坏了、国内域名全落 FINAL、国内网站不是直连、direct.txt、ChinaMax 只有 IP、规则集 IP 条目缺 no-resolve、pre-matching、extended-matching、pre-matching 指向策略组、Surge 拒绝加载配置、underlying-proxy 无法解析、smart 组评分、proxy-test-url 泄露、gstatic generate_204、always-real-ip、fake-ip、Surge 规则顺序、白名单排在 REJECT 之后、Surge profile 模板。新增或命中该技能时，一律优先加载，不要凭记忆答 Surge 语法。
 agent_created: true
 ---
 

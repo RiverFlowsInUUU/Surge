@@ -267,16 +267,16 @@ for f in files:
         else:
             fails.append(f"{f}: 没有 FINAL 兜底规则")
 
-    # ③-b 白名单守卫必须在拦截之前，且拦截必须在**域名类直连**之前。
+    # ③-b 白名单必须在拦截之前，且拦截必须在**域名类直连**之前。
     #
     # ⚠️ 判据不是"第一条 DIRECT 在第一条 REJECT 之前" —— 第一版这么写，
-    #    把**白名单守卫**（它本来就是 DIRECT，且**必须**排在 REJECT 前面）判成了违规。
+    #    把**白名单**（它本来就是 DIRECT，且**必须**排在 REJECT 前面）判成了违规。
     #    这里的真实铁律是两条独立的约束：
-    #      (i) 白名单 DIRECT 在本文件的第一条 REJECT 之前（否则守卫形同虚设）；
+    #      (i) 白名单 DIRECT 在本文件的第一条 REJECT 之前（否则白名单形同虚设）；
     #      (ii) 第一条 REJECT 在第一条"域名类直连规则"之前
     #           （否则国内广告域名被 direct.txt 接走，REJECT 永远轮不到）。
     #    (ii) 没法用"策略==DIRECT"表达 —— direct.txt 是 RULE-SET 也是 DIRECT。
-    #    改用"白名单之后的第一条 DIRECT"近似：白名单是紧挨着 REJECT 的那条守卫。
+    #    改用"白名单之后的第一条 DIRECT"近似：白名单是紧挨着 REJECT 的那条规则。
     REJECT_I = [i for i, p in enumerate(pols) if p.startswith("REJECT")]
     DIRECT_I = [i for i, p in enumerate(pols) if p == "DIRECT"]
     first_reject = REJECT_I[0] if REJECT_I else None
@@ -284,14 +284,14 @@ for f in files:
         before = [i for i in DIRECT_I if i < first_reject]
         after = [i for i in DIRECT_I if i > first_reject]
         if not before:
-            fails.append(f"{f}: 没有白名单守卫（第一条 REJECT 在第 {rs[first_reject][0]} 行，"
+            fails.append(f"{f}: 没有白名单（第一条 REJECT 在第 {rs[first_reject][0]} 行，"
                          f"它之前没有任何 DIRECT 规则）")
         elif len(before) > 1:
             fails.append(f"{f}: 第一条 REJECT 之前有 {len(before)} 条 DIRECT 规则"
                          f"（第 {rs[before[0]][0]}…{rs[before[-1]][0]} 行）—— "
-                         f"白名单守卫应当只有一条")
+                         f"白名单应当只有一条")
         else:
-            oks.append(f"{f}: 白名单守卫（第 {rs[before[0]][0]} 行）在拦截"
+            oks.append(f"{f}: 白名单（第 {rs[before[0]][0]} 行）在拦截"
                        f"（第 {rs[first_reject][0]} 行）之前 👍")
         if not after:
             fails.append(f"{f}: 拦截之后没有任何 DIRECT 规则 —— 国内流量会整片走代理")

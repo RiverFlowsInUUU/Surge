@@ -44,7 +44,7 @@ Surge 把被引用的规则集**在内存里展开成匹配表**。一份 11 万
 | 规则集 | 条数 | 域名 | IP | 缺 `no-resolve` 的 IP |
 |:-------|:----:|:----:|:--:|:---------------------:|
 | `surge-white-guard.list` | 43 | 43 | 0 | 0 |
-| `surge-ads.list` | 3891 | 3891 | 0 | 0 |
+| `surge-ads.list` | 3889 | 3889 | 0 | 0 |
 | `AI.list` | 49 | 49 | 0 | 0 |
 | `private.txt` | 130 | 130 | 0 | 0 |
 | `direct.txt` | 111169 | 111169 | 0 | 0 |
@@ -68,8 +68,8 @@ python skill/scripts/audit_ruleset_content.py profiles/lazy.conf
 
 ```
 ── 第 190 行 · surge-ads.list （新下载） → REJECT
-   共 3891 条：域名类 3891 / IP 类 0 / 其他 0
-   域名类型：{'DOMAIN-SUFFIX': 3820, 'DOMAIN-WILDCARD': 71}
+   共 3889 条：域名类 3889 / IP 类 0 / 其他 0
+   域名类型：{'DOMAIN-SUFFIX': 3740, 'DOMAIN-WILDCARD': 149}
 ```
 
 末尾还有直连集合的汇总：

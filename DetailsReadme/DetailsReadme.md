@@ -526,7 +526,7 @@ DOMAIN-SUFFIX,xboxlive.com,Proxy
 | 规则集 | 条数 | 类型 | 上游 |
 |:-------|:----:|:-----|:-----|
 | `surge-white-guard.list` | 43 | 纯域名 | jinx-ads-rules |
-| `surge-ads.list` | 3891 | 纯域名 | jinx-ads-rules |
+| `surge-ads.list` | 3889 | 纯域名 | jinx-ads-rules |
 | `AI.list` | 49 | 纯域名 | ACL4SSR（**钉 commit**） |
 | `private.txt` | 130 | 域名 + 可能含 IP | Loyalsoldier |
 | `direct.txt` | 111169 | 纯域名 | Loyalsoldier |
@@ -735,7 +735,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
-| 1–2 | 白名单守卫 / 广告拦截 | `DIRECT` / `REJECT` | 同 lazy |
+| 1–2 | 白名单 / 广告拦截 | `DIRECT` / `REJECT` | 同 lazy |
 | **3–7** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
 | **8–12** | 媒体社交：`Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` | 同名组 | **新增 5 条** |
 | **13–15** | 开发系统：`GitHub` / `Google` / `Microsoft` | 同名组 | **新增 3 条** |

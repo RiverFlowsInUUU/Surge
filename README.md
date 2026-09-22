@@ -87,7 +87,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 
 | # | 规则 | 🪶 懒人版 | 🧭 分流版 |
 |:-:|:-----|:----------|:----------|
-| 🛡️ | 白名单守卫 | `surge-white-guard.list` → `DIRECT` | 同左 |
+| 🛡️ | 白名单 | `surge-white-guard.list` → `DIRECT` | 同左 |
 | 🚫 | 广告拦截 | `surge-ads.list` → `REJECT` | 同左 |
 | 🤖 | 按应用 | `AI.list` → `AI` | 13 条，见下 |
 | 🎮 | 游戏机主机名 | `nintendo.net` · `playstation.net` · `xboxlive.com` → `Proxy` | 同左 |
@@ -151,7 +151,7 @@ surge/
 
 ## 📚 规则来源
 
-- 🛑 [jinx-ads-rules](https://github.com/RiverFlowsInUUU/jinx-ads-rules) —— 广告拦截 · 白名单守卫
+- 🛑 [jinx-ads-rules](https://github.com/RiverFlowsInUUU/jinx-ads-rules) —— 广告拦截 · 白名单
 - 🧩 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) —— 应用规则集
 - 🤖 [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR) —— `AI.list`
 - 🇨🇳 [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) —— `direct.txt` · `private.txt`
