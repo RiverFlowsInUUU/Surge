@@ -81,49 +81,24 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 
 ---
 
-## 📋 规则顺序
+## 📋 分流顺序
 
 自上而下匹配，第一条命中即决定去向。
 
-| # | 规则 | 🪶 懒人版 | 🧭 分流版 |
+| # | 匹配什么 | 🪶 懒人版 | 🧭 分流版 |
 |:-:|:-----|:----------|:----------|
-| 🛡️ | 白名单 | `surge-white-guard.list` → `DIRECT` | 同左 |
-| 🚫 | 广告拦截 | `surge-ads.list` + `AWAvenue-Ads-Rule` → `REJECT` | 同左 |
-| 🤖 | 按应用 | `AI.list` → `AI` | 14 条，见下 |
-| 🎮 | 游戏机主机名 | `nintendo.net` · `playstation.net` · `xboxlive.com` → `Proxy` | 同左 |
-| 🍎 | Apple 服务 | `SYSTEM` + `Apple_All_No_Resolve.list` → `DIRECT` | 同左 |
-| 🏠 | 内网 | `LAN` · `private.txt` → `DIRECT` | 同左 |
-| 🇨🇳 | 国内域名 | `direct.txt` → `DIRECT` | 同左 |
-| 🌏 | 国内 IP | `GEOIP,CN` → `DIRECT` | 同左 |
-| 🌐 | 兜底 | `Proxy` | `Final` |
+| 🛡️ | 白名单域名 | 直连 | 同左 |
+| 🚫 | 广告域名 | 拦截 | 同左 |
+| 🤖 | 按应用 | AI 服务 → `AI` | 13 类应用各自成组 |
+| 🎮 | 游戏机主机名 | `Proxy` | 同左 |
+| 🍎 | Apple 服务 | 直连 | 同左 |
+| 🏠 | 内网 | 直连 | 同左 |
+| 🇨🇳 | 国内域名 | 直连 | 同左 |
+| 🌏 | 国内 IP | 直连 | 同左 |
+| 🌐 | 其余全部 | `Proxy` | `Final` |
 
-> 🚫 **广告拦截是两条并列清单**：先 `Jinx` 黑名单，再 `AWAvenue-Ads-Rule`，
-> 两条同策略、同参数（`REJECT,pre-matching,extended-matching`）。
+> 🚫 **广告拦截由两条并列清单承担**，同策略、同参数。
 > ⚠️ **白名单必须排在这两条之前**，顺序不可调整。
-
-**分流版的应用规则**
-
-| 规则集 | 去向 |
-|:-------|:-----|
-| `OpenAI.list` | `ChatGPT` |
-| `Gemini.list` | `Gemini` |
-| `Anthropic.list` · `Claude.list` | `Claude` |
-| `AI.list` | `AI` |
-| `Spotify.list` | `Spotify` |
-| `YouTubeMusic.list` | `YouTubeMusic` |
-| `YouTube.list` | `YouTube` |
-| `Telegram.list` | `Telegram` |
-| `Twitter.list` | `Twitter` |
-| `GitHub.list` | `GitHub` |
-| `Google.list` | `Google` |
-| `Microsoft.list` | `Microsoft` |
-| `WeChat.list` | `WeChat` |
-
-**三条排序约束**
-
-1. 厂商专属规则排在 `AI.list` 之前，否则 AI 域名先被 `AI.list` 接走。
-2. `GitHub.list` 排在 `direct.txt` 之前 —— `github.com` 同时在国内直连清单里。
-3. IP 类规则（`GEOIP,CN`）排最后，全部带 `no-resolve`。
 
 ---
 
@@ -146,21 +121,10 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 |:--:|:-----|:-----|
 | 📁 | [`profiles/`](profiles/) | 4 份配置：懒人版 / 分流版 × 带注释 / 纯配置 |
 | 🖼️ | [`icons/`](icons/) | 策略组图标 |
-| 📚 | [`docs/`](docs/) | 11 篇专题 |
+| 📚 | [`docs/`](docs/) | 12 篇专题 |
 | 📘 | [`DetailsReadme/`](DetailsReadme/DetailsReadme.md) | 完整技术文档 |
 | 🗓️ | [`CHANGELOG.md`](CHANGELOG.md) | 版本记录 |
 | 🧪 | [`skill/`](skill/) | 审计脚本 + 回归测试 |
-
----
-
-## 📚 规则来源
-
-- 🛑 [Jinx](https://github.com/RiverFlowsInUUU/Jinx) —— 广告拦截 · 白名单
-- 🍂 [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) —— 广告拦截（第二条，**RULE-SET 版**）
-- 🧩 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) —— 应用规则集
-- 🤖 [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR) —— `AI.list`
-- 🇨🇳 [Loyalsoldier/surge-rules](https://github.com/Loyalsoldier/surge-rules) —— `direct.txt` · `private.txt`
-- 🗺️ [adysec/IP_database](https://github.com/adysec/IP_database) —— `GeoLite2-Country.mmdb`
 
 ---
 
@@ -168,9 +132,10 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 
 - 📘 [`DetailsReadme/`](DetailsReadme/) —— 逐段详解 · 原理推导 · 已知取舍 · FAQ
 - 🧭 [`docs/11`](docs/11-分流版设计.md) —— 分流版设计
+- 📚 [`docs/12`](docs/12-规则集与来源.md) —— 规则集与来源
 - ⚠️ [`docs/09`](docs/09-注意事项.md) —— 注意事项
 - 🎨 [`docs/10`](docs/10-图标与许可.md) —— 图标与许可
-- 📂 [`docs/`](docs/) —— 全部 11 篇
+- 📂 [`docs/`](docs/) —— 全部 12 篇
 - 🗓️ [`CHANGELOG.md`](CHANGELOG.md)
 
 ---
