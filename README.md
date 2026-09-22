@@ -33,7 +33,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 两版的分组，自上而下：第一列为分流版的组（每项配图标），第二列懒人版有则 ✅、无则 `-`，第三列分流版全覆盖 ✅。
 
 | 组 | 🪶 懒人版 | 🧭 分流版 |
-|:---:|:---:|:---:|
+|:---|:---:|:---:|
 | 🚀 `Proxy` | ✅ | ✅ |
 | ⚡ `Smart` | - | ✅ |
 | 🤖 `ChatGPT` · `Gemini` · `Claude` · `AI` | ✅ | ✅ |
