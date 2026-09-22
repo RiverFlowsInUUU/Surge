@@ -79,7 +79,7 @@ ALLOWED_DOMAINS = (
     "github.com", "api.github.com", "objects.githubusercontent.com",
     "www.google.com", "g.cn", "google.cn",   # [URL Rewrite] 的目标
     "apple.com",                       # proxy-test-udp 的探针
-    "surge-anti-dns-leak",             # README / 图标路径里的仓库名
+    "surge",             # README / 图标路径里的仓库名
     "jinx-ads-rules", "ACL4SSR", "Loyalsoldier", "adysec",  # 上游仓库名
     "blackmatrix7",                    # 上游规则集仓库名
     "nintendo.net", "playstation.net", "xboxlive.com",      # 规则匹配值

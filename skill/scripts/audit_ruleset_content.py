@@ -37,7 +37,7 @@ import urllib.request
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _surge_common import parse_conf, policy_index, split_csv, strip_comment  # noqa: E402
 
-UA = "surge-anti-dns-leak-audit/1.0"
+UA = "surge-audit/1.0"
 
 # 规则集条目类型分类
 _DOMAIN_TYPES = {

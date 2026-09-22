@@ -1,4 +1,4 @@
-# Surge 防 DNS 泄露 · 完整技术文档
+# Surge 配置模板 · 完整技术文档
 
 > 面向想彻底弄明白「为什么这么写」的读者。
 > 只想赶紧用起来 → 看 [`README`](../README.md) 的 [📥 两份配置](../README.md#-两份配置)。
@@ -28,7 +28,7 @@
 ## 1 · 文件结构与两份形态
 
 ```
-surge-anti-dns-leak/
+surge/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
 │   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用

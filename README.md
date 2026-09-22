@@ -1,15 +1,15 @@
 <div align="center">
 
-# 🛡️ Surge 防 DNS 泄露配置
+# 🛡️ Surge 配置模板
 
-**让 DNS 无处可漏**
+**🪶 懒人版 · 🧭 分流版**
 
-*不绑节点，不绑订阅*
+*不绑节点，不绑订阅 · 让 DNS 无处可漏*
 
-[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
-[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge-anti-dns-leak)
+[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
+[![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
+[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
+[![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
 </div>
@@ -19,13 +19,13 @@
 🪶 **懒人版** · 一个出口
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/lazy.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/lazy.min.conf
 ```
 
 🧭 **分流版** · 按应用 + 按地区
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profiles/routing.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.min.conf
 ```
 
 选中一条，点右上角复制 → Surge **配置 → 从 URL 下载** → 粘贴。
@@ -138,7 +138,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge-anti-dns-leak/main/profi
 ## 📁 文件结构
 
 ```
-surge-anti-dns-leak/
+surge/
 ├── 📁 profiles/        # 4 份配置：懒人版 / 分流版 × 带注释 / 纯配置
 ├── 🖼️ icons/           # 策略组图标
 ├── 📚 docs/            # 11 篇专题
