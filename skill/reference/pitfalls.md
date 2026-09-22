@@ -387,7 +387,7 @@ def add(level, cid, msg, detail=""):
 
 ## 16 · 负向断言里的关键词拷贝（浮层互斥性静默失效）
 
-**背景**：Surge 与 egern 的策略组都支持用正则筛节点（`policy-regex-filter` / `filter`）。
+**背景**：Surge 与 Egern 的策略组都支持用正则筛节点（`policy-regex-filter` / `filter`）。
 "其它地区"这类组没法用正向断言表达（"不在以上任何一个地区"），只能写**负向断言**：
 
 ```ini

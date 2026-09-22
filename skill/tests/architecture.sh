@@ -79,8 +79,8 @@ ALLOWED_DOMAINS = (
     "github.com", "api.github.com", "objects.githubusercontent.com",
     "www.google.com", "g.cn", "google.cn",   # [URL Rewrite] 的目标
     "apple.com",                       # proxy-test-udp 的探针
-    "surge",             # README / 图标路径里的仓库名
-    "jinx-ads-rules", "ACL4SSR", "Loyalsoldier", "adysec",  # 上游仓库名
+    "Surge",             # README / 图标路径里的仓库名
+    "Jinx", "ACL4SSR", "Loyalsoldier", "adysec",  # 上游仓库名
     "blackmatrix7",                    # 上游规则集仓库名
     "nintendo.net", "playstation.net", "xboxlive.com",      # 规则匹配值
     "pool.ntp.org", "market.xiaomi.com", "home.arpa",
@@ -312,16 +312,16 @@ for f in files:
 
     oks.append(f"{f}: {len(rs)} 条规则，顺序与 no-resolve 均符合铁律")
 
-# ── ④ routing.conf 的组顺序必须与 egern v2.5 对齐 ───────────────────────────
+# ── ④ routing.conf 的组顺序必须与 Egern v2.5 对齐 ───────────────────────────
 #
 # ⚠️ 为什么必须有这一条（这是**踩过两次**的坑）：
 #    [Proxy Group] 的**先后顺序**此前没有任何断言守着 —— 改一个组、挪一段注释，
 #    顺序就可能悄悄漂走，而所有其它断言（成员可解析、规则可解析、地区正则一致）
 #    **照样全绿**。老板两次发现"分流组前后顺序又错了"，两次都是靠肉眼。
-#    ⇒ 顺序是**被承诺过的对外特征**（README 明写"与 egern v2.5 对齐"），
+#    ⇒ 顺序是**被承诺过的对外特征**（README 明写"与 Egern v2.5 对齐"），
 #      就必须有机械对账。
 #
-# 顺序来源（唯一真值）：仓库外的参考配置 egern v2.5。
+# 顺序来源（唯一真值）：仓库外的参考配置 Egern v2.5。
 # ⚠️ 该文件**不在本仓库内**，所以断言采用"**把顺序写死在这里**"的做法：
 #    它是承诺值，不是从外部文件推导出来的。改顺序 = 必须同时改这里，
 #    这正是我们想要的 —— 逼改动者显式面对"我在改一个承诺"。
@@ -360,7 +360,7 @@ if os.path.isfile(_rf_full):
     got_names = [n for _, n in got]
     if got_names == PG_ORDER:
         oks.append(f"routing.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
-                   f"与 egern v2.5 对齐 👍")
+                   f"与 Egern v2.5 对齐 👍")
     else:
         diffs = []
         for i in range(max(len(got_names), len(PG_ORDER))):
@@ -370,9 +370,9 @@ if os.path.isfile(_rf_full):
                 line = got[i][0] if i < len(got) else None
                 diffs.append(f"        第 {i+1} 位：期望 `{a}`，实际 `{b}`"
                              + (f"（第 {line} 行）" if line else ""))
-        fails.append("routing.conf: [Proxy Group] 顺序与 egern v2.5 不一致\n"
+        fails.append("routing.conf: [Proxy Group] 顺序与 Egern v2.5 不一致\n"
                      + "\n".join(diffs)
-                     + "\n        ⇒ 顺序是对外承诺（README 明写与 egern 对齐）；"
+                     + "\n        ⇒ 顺序是对外承诺（README 明写与 Egern 对齐）；"
                        "确实要改就同时更新本文件的 PG_ORDER")
 
     # ④-b min 版必须与完整版组顺序一致（min 是同一份配置去注释，不能各排各的）

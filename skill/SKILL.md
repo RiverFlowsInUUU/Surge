@@ -85,7 +85,7 @@ Egern（见 `egern-profile-dns-hardening` 技能）、Shadowrocket（`dns-server
 | `audit_region_filters.py` | 分流配置里 7 个地区组的 `policy-regex-filter` 关键词是否同步（负向断言那份拷贝）、是否互斥、类型是否 `smart`。见坑 16 | ❌ |
 
 ⚠️ **分流配置（按应用 / 按地区分组）另有三条 Surge 特有的硬约束**，
-与 egern 等客户端的写法**不通用**：
+与 Egern 等客户端的写法**不通用**：
 
 | 约束 | 官方依据 | 正确写法 |
 |:-----|:---------|:---------|

@@ -130,7 +130,7 @@ FALSE_POSITIVE_PROBES = [
 #    靠的是那份 Apple_All_No_Resolve.list。
 #    ⚠️ 判据意义：Apple 流量走代理**不会报错**，只会「变慢 + 偶尔推送延迟」——
 #       属于用户不会主动报障、但体验确实变差的一类。所以要靠审计钉住。
-#       当年 egern 把这条规则集写成不带 no-resolve 的版本，泄露就是从这类"看不见的解析"来的。
+#       当年 Egern 把这条规则集写成不带 no-resolve 的版本，泄露就是从这类"看不见的解析"来的。
 APPLE_PROBES = [
     "www.apple.com", "swcdn.apple.com", "gs-loc.apple.com",
     "courier.push.apple.com", "developer.apple.com", "gateway.icloud.com",

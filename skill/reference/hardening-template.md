@@ -278,7 +278,7 @@ AdBlock = reject
 ## 3 · `[Proxy Group]`
 
 ```
-Proxy = smart, "Node-A", "Node-B", icon-url=https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/icons/Proxy.png
+Proxy = smart, "Node-A", "Node-B", icon-url=https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/icons/Proxy.png
 AI    = smart, "Node-C", "Node-D", icon-url=…/openai.png
 AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 ```

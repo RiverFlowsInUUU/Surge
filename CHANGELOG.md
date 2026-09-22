@@ -8,17 +8,17 @@
 
 ### 新增
 
-- 🚫 **广告拦截补第二条清单 `AWAvenue-Ads-Rule`** —— 此前本仓只有 `jinx-ads-rules`
-  一条黑名单（姊妹仓 `egern` 是**两条并列**），本次补齐，**两份配置的两种形态共 4 个文件**
+- 🚫 **广告拦截补第二条清单 `AWAvenue-Ads-Rule`** —— 此前本仓只有 `Jinx`
+  一条黑名单（姊妹仓 `Egern` 是**两条并列**），本次补齐，**两份配置的两种形态共 4 个文件**
   均已加入：`lazy.conf` / `lazy.min.conf` / `routing.conf` / `routing.min.conf`。
-  - 📍 **位置**：紧跟 `jinx` 那条之后、`AI.list` 之前 —— 与 egern 的相对顺序一致
-    （`白名单 → jinx → AWAvenue → 应用分流`）。规则数 `13 → 14`（lazy）、`26 → 27`（routing）。
-  - 🔧 **策略与参数同 jinx**：`REJECT,pre-matching,extended-matching`。
+  - 📍 **位置**：紧跟 `Jinx` 那条之后、`AI.list` 之前 —— 与 Egern 的相对顺序一致
+    （`白名单 → Jinx → AWAvenue → 应用分流`）。规则数 `13 → 14`（lazy）、`26 → 27`（routing）。
+  - 🔧 **策略与参数同 Jinx**：`REJECT,pre-matching,extended-matching`。
     本仓的广告拦截走**字面量 `REJECT`** 而非 `AD` 组（理由见 `DetailsReadme` §13.3），
     所以这里同样不指向 `AD` 组。
   - ⚠️ **地址用的是 `...-RULE-SET.list`（965 条），不是 `...-Surge.list`（961 条）** ——
     后者是**裸域名**（`.8le8le.com`）对应 `DOMAIN-SET` 类型，与本仓消费的 `RULE-SET` 不匹配。
-  - 📊 **收益按「净新增覆盖」量化**：AWAvenue 965 条中 **884 条**已被 jinx 的后缀 / 通配
+  - 📊 **收益按「净新增覆盖」量化**：AWAvenue 965 条中 **884 条**已被 Jinx 的后缀 / 通配
     规则覆盖，**净新增 81 条（8.4%）**。
   - ✅ **规则集本体已核对**：DOMAIN 949 / DOMAIN-SUFFIX 12 / DOMAIN-KEYWORD 4，
     **100% 域名类**，无 IP-CIDR / URL-REGEX / USER-AGENT ⇒ `pre-matching` 安全。
@@ -35,13 +35,17 @@
   **防 DNS 泄露是它们的特色，不是全部定位**。README 首页标题由「Surge 防 DNS 泄露配置」
   改为「Surge 配置模板」，副标题摆出两个模板、DNS 零泄露降为特色一句；
   badge 行把 `Profiles` / `Rules` 提到 `DNS` 之前。
-- 📦 **仓库改名 `surge-anti-dns-leak` → `surge`** —— 原名把定位写死在「防泄露」上。
-  ⚠️ **旧链接不会失效**：GitHub 对改名仓保留 301 跳转，旧订阅地址与图标 URL 仍能下载。
-  仓内 **88 处**引用（图标 URL / 订阅地址 / 文档自引用 / 审计脚本 UA / 架构断言）已全部改为新名。
-  姊妹项目 `egern-anti-dns-leak` 同步改名为 `egern`。
+- 📦 **仓库改名 `surge-anti-dns-leak` → `Surge`** —— 原名把定位写死在「防泄露」上；
+  同日随后做了**大小写规范化**（`surge` → `Surge`），与官方写法一致。
+  ⚠️ **旧链接不会失效**：GitHub 对改名仓保留 301 跳转，旧订阅地址与图标 URL 仍能下载
+  （**实测**：raw 旧名 HTTP 200、jsDelivr 旧名 HTTP 200、`github.com` 旧名 301 → 新名）。
+  仓内引用共改两轮 —— 首轮 88 处（图标 URL / 订阅地址 / 文档自引用 / 审计脚本 UA / 架构断言），
+  本轮再改 **233 处**。姊妹项目 `egern-anti-dns-leak` 同步改名为 `Egern`。
+  - 📌 **代码标识符与文件名保持小写**：`check_surge_dns.py` / `_surge_common.py` /
+    `surge-profile-dns-hardening` / `surge-ads.list` 等一律未动，只改文本里的裸称呼。
 - 📝 **GitHub 仓库描述同步修正** —— 改为「两个模板 + DNS 特色」的说法，
   并修掉两处过期数字（审计脚本 3 → **4** 个、回归断言 13 → **15** 条）。
-- 🏷️ **规则集命名与上游对齐 + 过期读数修正** —— 上游 `jinx-ads-rules` 已取消差集版，
+- 🏷️ **规则集命名与上游对齐 + 过期读数修正** —— 上游 `Jinx` 已取消差集版，
   并把「完整版 / 白名单守卫」改名为「黑名单 / 白名单」。本仓同步：
   - 文档与配置注释里「白名单守卫」→「**白名单**」共 **28 处**（另 4 处散文泛指「守卫」一并理顺）
   - 广告规则集条数 `3891` → **`3889`**（上游剔除 2 条与自身白名单冲突的条目）；
@@ -68,14 +72,14 @@
 - 🧭 **一份分流配置**：`profiles/routing.conf`（带注释）与 `routing.min.conf`（纯配置）；
   26 组 / 26 条规则，按**应用**分并在组内按**地区**再分
   （中国香港 / 美国 / 日本 / 中国台湾 / 新加坡 / 韩国 / 其它地区 + 低倍率池）
-- 🧩 **12 个应用分流组**，取向与 egern v2.5 逐组对齐：
+- 🧩 **12 个应用分流组**，取向与 Egern v2.5 逐组对齐：
   ChatGPT / Gemini / Claude / AI / Google / Spotify / YouTubeMusic / YouTube /
   GitHub / Microsoft / Telegram / Twitter
   - 🤖 AI 与开发类默认走代理（ChatGPT / Gemini / Spotify / YouTube / Telegram /
     Twitter / GitHub），Claude 默认落**中国台湾**组
   - 🪟 `Microsoft` 与 💚 `WeChat` **默认直连** —— 微信单列一组的意义是把它从兜底里
     摘出来，避免被 `Final` 送进代理
-  - 🔎 `Google` 首项指向 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」，与 egern 一致
+  - 🔎 `Google` 首项指向 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」，与 Egern 一致
 - 🍎 **Apple 服务直连**：在 Surge 内置 `SYSTEM` 之外补 `Apple_All_No_Resolve.list` ——
   `SYSTEM` 只覆盖激活 / 推送 / 配对核心主机，覆盖面明显不够
 - 🌏 **地区组用正则筛节点**：`policy-regex-filter` 匹配节点名里的地区关键词；
@@ -116,18 +120,18 @@
 - 🐛 **补上 10 个漏掉的分流组**：`Gemini` / `Spotify` / `YouTubeMusic` / `YouTube` /
   `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` / `WeChat`。
   此前这些应用的流量**全部落到兜底 `Final → Proxy`**：能通，但"按应用分流"是空的，
-  且 `Microsoft` / `WeChat` 的直连取向与 egern v2.5 不一致
+  且 `Microsoft` / `WeChat` 的直连取向与 Egern v2.5 不一致
 - 🐛 **Apple 规则集改用 `No_Resolve` 版**（两份配置都改）：`Apple_All.list` 里有 13 条
   `IP-CIDR` 没带 `no-resolve`，而该规则排在 IP 类规则之前且策略是 `DIRECT` ⇒
   每个未命中的域名经过这里都会被**强制解析一次**
 - 🐛 **修正配置内关于广告组的说明**：`AD` 组是独立的手动开关，
   拦截动作走字面量策略，两者分层存在、职责不重叠
 - 🐛 **移除空转参数**：`update-interval` 写在非订阅型策略组上不生效
-- 🐛 **`[Proxy Group]` 段序改为与 egern v2.5 逐位对齐**：
+- 🐛 **`[Proxy Group]` 段序改为与 Egern v2.5 逐位对齐**：
   ① 总入口 → ② 应用组 → ③ 订阅槽位 + 开关 → ④ 地区组 + 精选 → ⑤ 兜底。
-  并把 `MAX` 放回 `Proxy` 的**首项**（egern 的 `Proxy.policies[0]` 就是 `MAX`）。
-  此前顺序与应用组写法都是自创的，与 egern 不符
-- 🐛 **应用组改为 `select, include-other-group="Proxy"`**：egern 的应用组
+  并把 `MAX` 放回 `Proxy` 的**首项**（Egern 的 `Proxy.policies[0]` 就是 `MAX`）。
+  此前顺序与应用组写法都是自创的，与 Egern 不符
+- 🐛 **应用组改为 `select, include-other-group="Proxy"`**：Egern 的应用组
   `policies` 只有 `[Proxy]` 一项（外加 `flatten: true`），此前"把地区组一个个列成成员"
   是读错 `flatten` 之后的自创写法
 - 🐛 **审计器允许策略组前向引用**：Surge 官方文档的
@@ -140,13 +144,13 @@
 
 - 🔐 **本仓库是脱敏模板**。所有节点地址均为文档专用地址段，凭据均为占位符，
   导入前需替换为自己的节点
-- 🔀 **`flatten` 的 Surge 对应物是 `include-other-group`**：egern 的 `flatten: true`
+- 🔀 **`flatten` 的 Surge 对应物是 `include-other-group`**：Egern 的 `flatten: true`
   把**组名**替换成组内具体节点，Surge 用 `include-other-group` 达到同样效果（官方原文：
   "includes the resolved member policies from other policy groups"）。
-  ⇒ 应用组因此写成 `select, include-other-group="Proxy"`，与 egern 逐字对齐
+  ⇒ 应用组因此写成 `select, include-other-group="Proxy"`，与 Egern 逐字对齐
 - ⚠️ **Smart 组不能拿组名当子策略**：官方明文限制，需要 `smart` 自动选优的地方
   一律走 `include-other-group`
-- ⚠️ **应用组没有自动故障转移**：egern 的应用组是 `fallback` / `smart`（自动），
+- ⚠️ **应用组没有自动故障转移**：Egern 的应用组是 `fallback` / `smart`（自动），
   Surge 的 `select` 是纯手动 ⇒ 本配置的应用组是「默认走 `Proxy` 全部节点 + 面板可改道」。
   想要自动选优就把某个组换成 `smart, include-other-group="Proxy"`
   （代价：面板上不能再手动挑节点）

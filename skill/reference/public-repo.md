@@ -7,7 +7,7 @@
 ## 1 · 交付物清单
 
 ```
-surge/
+Surge/
 ├── README.md                    # 门面：快速开始 / 两份配置 / 原理 / 组结构 / 规则顺序 / 来源
 ├── CHANGELOG.md                 # 更新日志（Keep a Changelog，时间倒序）
 ├── LICENSE                      # MIT

@@ -6,10 +6,10 @@
 
 *不绑节点，不绑订阅 · 让 DNS 无处可漏*
 
-[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
-[![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
-[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
-[![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/surge)
+[![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
+[![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
+[![Rules](https://img.shields.io/badge/Rules-13%20%7C%2026-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
+[![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
 </div>
@@ -19,13 +19,13 @@
 🪶 **懒人版** · 一个出口
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/lazy.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/lazy.min.conf
 ```
 
 🧭 **分流版** · 按应用 + 按地区
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.min.conf
 ```
 
 选中一条，点右上角复制 → Surge **配置 → 从 URL 下载** → 粘贴。
@@ -51,7 +51,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 
 `profiles/routing.conf` · `profiles/routing.min.conf`
 
-26 组 / 27 条规则。先按应用分，再按地区分。组序与 egern v2.5 对齐。
+26 组 / 27 条规则。先按应用分，再按地区分。组序与 Egern v2.5 对齐。
 
 | 层 | 组 | 选路 |
 |:---|:---|:---|
@@ -97,9 +97,9 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 | 🌏 | 国内 IP | `GEOIP,CN` → `DIRECT` | 同左 |
 | 🌐 | 兜底 | `Proxy` | `Final` |
 
-> 🚫 **广告拦截是两条并列清单**（与 egern 的结构一致）：先 `jinx-ads-rules` 的黑名单，
+> 🚫 **广告拦截是两条并列清单**（与 Egern 的结构一致）：先 `Jinx` 的黑名单，
 > 再 `AWAvenue-Ads-Rule`，两条同策略、同参数（`REJECT,pre-matching,extended-matching`）。
-> AWAvenue 相对 jinx **净新增 81 条（8.4%）**未收录广告域；其中 10 条与白名单重叠，
+> AWAvenue 相对 Jinx **净新增 81 条（8.4%）**未收录广告域；其中 10 条与白名单重叠，
 > ⚠️ **所以白名单必须留在两条清单之前**，顺序不可调整。
 
 **分流版的应用规则**
@@ -143,7 +143,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/surge/main/profiles/routing.mi
 ## 📁 文件结构
 
 ```
-surge/
+Surge/
 ├── 📁 profiles/        # 4 份配置：懒人版 / 分流版 × 带注释 / 纯配置
 ├── 🖼️ icons/           # 策略组图标
 ├── 📚 docs/            # 11 篇专题
@@ -156,7 +156,7 @@ surge/
 
 ## 📚 规则来源
 
-- 🛑 [jinx-ads-rules](https://github.com/RiverFlowsInUUU/jinx-ads-rules) —— 广告拦截 · 白名单
+- 🛑 [Jinx](https://github.com/RiverFlowsInUUU/Jinx) —— 广告拦截 · 白名单
 - 🍂 [TG-Twilight/AWAvenue-Ads-Rule](https://github.com/TG-Twilight/AWAvenue-Ads-Rule) —— 广告拦截（第二条，**RULE-SET 版**）
 - 🧩 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script) —— 应用规则集
 - 🤖 [ACL4SSR/ACL4SSR](https://github.com/ACL4SSR/ACL4SSR) —— `AI.list`

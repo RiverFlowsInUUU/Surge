@@ -28,7 +28,7 @@
 ## 1 · 文件结构与两份形态
 
 ```
-surge/
+Surge/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
 │   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
@@ -525,8 +525,8 @@ DOMAIN-SUFFIX,xboxlive.com,Proxy
 
 | 规则集 | 条数 | 类型 | 上游 |
 |:-------|:----:|:-----|:-----|
-| `surge-white-guard.list` | 43 | 纯域名 | jinx-ads-rules |
-| `surge-ads.list` | 3889 | 纯域名 | jinx-ads-rules |
+| `surge-white-guard.list` | 43 | 纯域名 | Jinx |
+| `surge-ads.list` | 3889 | 纯域名 | Jinx |
 | `AWAvenue-Ads-Rule-Surge-RULE-SET.list` | 965 | 纯域名 | TG-Twilight（⚠️ **必须用 RULE-SET 版**） |
 | `AI.list` | 49 | 纯域名 | ACL4SSR（**钉 commit**） |
 | `private.txt` | 130 | 域名 + 可能含 IP | Loyalsoldier |
@@ -554,8 +554,8 @@ RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/75f01010…/Clash/Rul
 
 ### 11.4 广告拦截为什么是两条清单，且地址必须用 `-RULE-SET` 版
 
-**① 两条并列，不是替换。** 顺序是 `白名单 → jinx-ads-rules → AWAvenue → 应用分流`，
-与 egern 的结构一致。两条同策略同参数（`REJECT,pre-matching,extended-matching`）——
+**① 两条并列，不是替换。** 顺序是 `白名单 → Jinx → AWAvenue → 应用分流`，
+与 Egern 的结构一致。两条同策略同参数（`REJECT,pre-matching,extended-matching`）——
 Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3：
 只有字面量 REJECT 族才能吃到 `pre-matching`（组不行）。
 
@@ -564,7 +564,7 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 | 指标 | 值 |
 |:-----|:---|
 | AWAvenue 条目数 | 965 |
-| 已被 jinx 的后缀 / 通配规则覆盖 | 884 |
+| 已被 Jinx 的后缀 / 通配规则覆盖 | 884 |
 | **净新增覆盖** | **81（8.4%）** |
 
 **③ 地址必须用 `...-RULE-SET.list`。** 上游同仓提供两个变体，**格式不同、不能互换**：
@@ -576,7 +576,7 @@ Surge 这边指向**字面量 `REJECT`** 而不是 `AD` 组，理由见 §13.3�
 
 本模板用的是 `RULE-SET` ⇒ 必须取后者。RULE-SET 版还**多 4 条**（那 4 条是无法写成
 裸域名的 `DOMAIN-KEYWORD` / `DOMAIN-SUFFIX`）。换成裸域名版，Surge 会拿 961 行
-「前导点域名」当规则行解析 —— 格式不匹配。（egern 于 2026-09-22 修过同一问题。）
+「前导点域名」当规则行解析 —— 格式不匹配。（Egern 于 2026-09-22 修过同一问题。）
 
 **④ 顺序是这条的命门。** AWAvenue 会命中白名单里的 **10 条**功能域
 （`jpush.cn` / `appcfg.v.qq.com` / `p.l.qq.com` / 微信登录 `apd-pcdnwx*` / 字节 `tnc3-*`）——
@@ -661,7 +661,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 
 **`routing.conf` —— 26 个组**
 
-组序与 egern v2.5 **逐位对齐**（由 `skill/tests/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern v2.5 **逐位对齐**（由 `skill/tests/architecture.sh` 的 ④ 断言守着）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -674,23 +674,23 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > ⚠️ **应用组是 `select` 而不是 `smart`** —— 官方限制：**Smart 组不能拿其他组当子策略**
-> （见 §13.2 ②）。而 egern 的对应物是 `policies: [Proxy] + flatten: true`，
+> （见 §13.2 ②）。而 Egern 的对应物是 `policies: [Proxy] + flatten: true`，
 > 其 Surge 等价写法就是 `select, include-other-group="Proxy"`。
 > 地区组用 `smart` 是因为它筛的是**具体节点**，需要打分。
 >
-> ⚠️ **能力差异（必须说清）**：egern 的应用组是 `fallback` / `smart`（**自动**故障转移），
+> ⚠️ **能力差异（必须说清）**：Egern 的应用组是 `fallback` / `smart`（**自动**故障转移），
 > Surge 的 `select` 是**纯手动** ⇒ 本配置的应用组「默认走 `Proxy` 全部节点 + 面板可手动改」，
 > **没有自动故障转移**。想要自动选优就把某组换成 `smart, include-other-group="Proxy"`
 > （代价：面板上不能再手动挑节点）。
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
-**应用组各自的默认取向**（首项即默认，与 egern v2.5 对齐）：
+**应用组各自的默认取向**（首项即默认，与 Egern v2.5 对齐）：
 
 | 应用组 | 默认 | 备注 |
 |:-------|:----:|:-----|
 | `ChatGPT` / `Gemini` / `AI` | `Proxy` | |
-| `Claude` | **`Taiwan`** | egern 的取向，Claude 对台湾线路较友好 |
+| `Claude` | **`Taiwan`** | Egern 的取向，Claude 对台湾线路较友好 |
 | `Google` | `Gemini` → `Proxy` | 首项是 `Gemini` 组 ⇒ 「Google 走 Gemini → Proxy」 |
 | `Spotify` / `YouTubeMusic` / `YouTube` | `Proxy` | 媒体类 |
 | `Telegram` / `Twitter` | `Proxy` | 社交类 |
@@ -750,8 +750,8 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
 | 1 | `RULE-SET,…,surge-white-guard.list` | `DIRECT` | — | **必须**在 REJECT 之前，否则形同虚设。它同时兜住两条黑名单的误杀 |
-| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
-| 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 egern 对齐，见 §11.4 |
+| 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
+| 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
 | 4 | `RULE-SET,…,AI.list` | `AI` | `update-interval=86400,no-resolve` | 纯域名集，显式 `no-resolve` |
 | 5 | `DOMAIN-SUFFIX,nintendo.net` | `Proxy` | — | 见 §9.3 |
 | 6 | `DOMAIN-SUFFIX,playstation.net` | `Proxy` | — | 同上 |
@@ -785,7 +785,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 ### 14.1 为什么 Apple 规则集必须用 `No_Resolve` 版
 
-这是 egern 项目实测踩出来的坑，直接搬过来：
+这是 Egern 项目实测踩出来的坑，直接搬过来：
 
 `Apple_All.list` 里有 **13 条 `IP-CIDR` 没带 `no-resolve`**（`139.178.128.0/18` 等 Apple CDN 段）。
 而这条规则排在后面那些 IP 类规则**之前**、策略又是 `DIRECT` ⇒
@@ -799,7 +799,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 覆盖面无损失，对 IP 形式的连接判定也完全不受影响（IP 本就无需解析）。
 所以这里没有取舍，纯粹是用对版本。
 
-> 📌 当年 egern 把 20 个远程规则集逐个下载核对过：**只有 `Apple_All.list` 存在这个缺陷**。
+> 📌 当年 Egern 把 20 个远程规则集逐个下载核对过：**只有 `Apple_All.list` 存在这个缺陷**。
 > 本项目的 `audit_ruleset_content.py` 会把这条检查自动跑一遍。
 
 ### 14.2 铁律（两版通用）
