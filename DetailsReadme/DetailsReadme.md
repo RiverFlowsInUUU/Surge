@@ -666,12 +666,18 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
 | ① 总入口 | `Proxy` / `Smart` | `select` / `smart` | `Proxy` 是**手动**总出口（首项 `MAX`）；`Smart` 是自动全节点池 |
-| ② 应用 | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | `select` | 都是 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员** |
+| ② 应用（13 组） | `ChatGPT` / `Gemini` / `Claude` / `AI` / `Spotify` / `YouTubeMusic` / `YouTube` / `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` / `WeChat` | `select` | 都是 `include-other-group="Proxy"` —— 复制 `Proxy` 的**已解析成员**（`WeChat` 首项 `DIRECT`，见下方 📌） |
 | ③ 订阅 | `Airport` | `select` | `policy-path` 订阅槽位，`hidden=true` |
-| ③ 开关 | `WeChat` / `AD` | `select` | `WeChat` 首项 `DIRECT`；`AD` 独立手动开关 |
+| ③ 开关 | `AD` | `select` | 独立手动开关，**不被规则引用**（见 §13.3） |
 | ④ 地区 | `Hong Kong` / `USA` / `Japan` / `Taiwan` / `Singapore` / `Korea` / `Other Regions` | `smart` | `policy-regex-filter` 按节点名筛 |
 | ④ 精选 | `MAX` | `smart` | 只筛低倍率（`0.x`）节点 |
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
+
+> 📌 **`WeChat` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
+> `AD` 之前，这是**位置**，随 Egern v2.5 的组序（`architecture.sh` ④ 断言守着），**不是功能归类**。
+> 判据是「有没有被规则引用」：`WeChat` 被 `RULE-SET,…,WeChat.list,WeChat` 引用 ⇒ 它是**应用组**；
+> `AD` 被刻意设计成**不被任何规则引用**（§13.3）⇒ 它才是本仓唯一的「开关」。
+> 配置里 `# --- ③ 订阅槽位 + 开关 ---` 这个分节标题同样是按**位置**切的。
 
 > ⚠️ **应用组是 `select` 而不是 `smart`** —— 官方限制：**Smart 组不能拿其他组当子策略**
 > （见 §13.2 ②）。而 Egern 的对应物是 `policies: [Proxy] + flatten: true`，

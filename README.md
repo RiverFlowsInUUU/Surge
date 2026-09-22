@@ -56,12 +56,18 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 | 层 | 组 | 选路 |
 |:---|:---|:---|
 | 🎯 总入口 | `Proxy` · `Smart` | `Proxy` 手动（首项 `MAX`）· `Smart` 自动 |
-| 🧩 应用 | 12 组（见下） | 手动，默认走 `Proxy` 全部节点 |
+| 🧩 应用 | 13 组（见下） | 手动；多数默认走 `Proxy`，`Microsoft` · `WeChat` 首项 `DIRECT` |
 | 📡 订阅 | `Airport` | 订阅槽位（隐藏） |
-| 🛑 开关 | `WeChat` · `AD` | 手动 |
+| 🛑 开关 | `AD` | 手动，**不被规则引用** |
 | 🌏 地区 | `Hong Kong` · `USA` · `Japan` · `Taiwan` · `Singapore` · `Korea` · `Other Regions` | 自动，按节点名正则筛 |
 | 💎 精选 | `MAX` | 自动，低倍率节点 |
 | 🌐 兜底 | `Final` | 手动（默认 `Proxy`） |
+
+> 📌 **`WeChat` 为什么不算「开关」**：它在 `[Proxy Group]` 里的位置（`Airport` 之后、`AD` 之前）
+> 是随 Egern v2.5 的**组序**，属于**位置分节**而不是功能归类 —— 该组被
+> `RULE-SET,…,WeChat.list` 引用、首项 `DIRECT`，功能上属**应用组**，故上表计入 🧩 应用（13 组）。
+> 全仓唯一的开关是 `AD`：它**不被任何规则引用**，只作面板上的人工干预入口（见 `DetailsReadme` §13.3）。
+> 配置里的分节注释写的是「③ 订阅槽位 + 开关」，也是按位置切的。
 
 **应用组的默认出口**
 
@@ -89,7 +95,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.mi
 |:-:|:-----|:----------|:----------|
 | 🛡️ | 白名单 | `surge-white-guard.list` → `DIRECT` | 同左 |
 | 🚫 | 广告拦截 | `surge-ads.list` + `AWAvenue-Ads-Rule` → `REJECT` | 同左 |
-| 🤖 | 按应用 | `AI.list` → `AI` | 13 条，见下 |
+| 🤖 | 按应用 | `AI.list` → `AI` | 14 条，见下 |
 | 🎮 | 游戏机主机名 | `nintendo.net` · `playstation.net` · `xboxlive.com` → `Proxy` | 同左 |
 | 🍎 | Apple 服务 | `SYSTEM` + `Apple_All_No_Resolve.list` → `DIRECT` | 同左 |
 | 🏠 | 内网 | `LAN` · `private.txt` → `DIRECT` | 同左 |
