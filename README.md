@@ -6,7 +6,7 @@
 
 [![Surge](https://img.shields.io/badge/Surge-iOS%20%7C%20macOS-1f6feb?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![Profiles](https://img.shields.io/badge/Profiles-lazy%20%7C%20routing-0969da?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
-[![Rules](https://img.shields.io/badge/Rules-14%20%7C%2027-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
+[![Rules](https://img.shields.io/badge/Rules-14%20%7C%2024-8250df?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![DNS](https://img.shields.io/badge/DNS-Zero%20Leak-2ea043?style=flat-square)](https://github.com/RiverFlowsInUUU/Surge)
 [![License](https://img.shields.io/badge/License-MIT-dfb317?style=flat-square)](docs/10-图标与许可.md)
 
@@ -23,7 +23,7 @@ https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/lazy.min.c
 🧭 **分流版** · 可控 · 随心
 
 ```
-https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing.min.conf
+https://raw.githubusercontent.com/RiverFlowsInUUU/Surge/main/profiles/routing_v3.min.conf
 ```
 
 ---

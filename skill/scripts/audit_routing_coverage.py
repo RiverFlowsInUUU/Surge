@@ -59,7 +59,7 @@ DOMESTIC_PROBES = [
 #    期望值必须精确到**组名**，才能证明「按应用分流」真的接住了对应域名。
 #
 #    两套期望的差别只在于组名：lazy.conf 只有一个 AI 组，
-#    routing.conf 把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
+#    routing_v3.conf 把它拆成了 ChatGPT / Gemini / Claude / AI 四个组，
 #    并把 Spotify / YouTube / GitHub / Google / Microsoft / Telegram / Twitter /
 #    WeChat 这些也各自单列。
 #    ⚠️ 这不是"顺手放宽"—— 它是**分流版新增能力**的验收条件：
@@ -76,7 +76,7 @@ FOREIGN_PROBES = {
     "x.com": {"PROXY"},
 }
 
-# 分流版（routing.conf）—— 精确到应用组名。
+# 分流版（routing_v3.conf）—— 精确到应用组名。
 #
 # ⚠️ 这张表的作用是**反向证明「按应用分流」真的接住了域名**：
 #    每个探针必须落进它**专属**的那个组，落到兜底（Final）就算失败。

@@ -70,7 +70,7 @@ DOC_NETS = ("192.0.2.", "198.51.100.", "203.0.113.")
 # 允许出现在模板里的域名（占位域名 + 公开规则集/测试端点域名）
 ALLOWED_DOMAINS = (
     "example.com", "example.net", "example.org",
-    "sub.example.com",                 # 订阅 URL 的占位域名（routing.conf）
+    "sub.example.com",                 # 订阅 URL 的占位域名（routing_v3.conf）
     "cdn-relay.example.com",
     "connect.rom.miui.com",            # 连通性测试端点
     "www.gstatic.com",                 # TCP 测速端点（性能探针，刻意境外）
@@ -195,7 +195,7 @@ def dns_kv(path):
 
 # ⚠️ 两组形态，各查一遍。routing 与 lazy 的 DNS 段**必须逐字相同** ——
 #    "这份配置是分流版"不构成降低防泄露标准的理由。
-for _stem in ("lazy", "routing"):
+for _stem in ("lazy", "routing_v3"):
     full_p = os.path.join(profiles_dir, f"{_stem}.conf")
     min_p = os.path.join(profiles_dir, f"{_stem}.min.conf")
     if not (os.path.isfile(full_p) and os.path.isfile(min_p)):
@@ -221,7 +221,7 @@ for _stem in ("lazy", "routing"):
 
 # ②-b 跨形态：routing 与 lazy 的 DNS 段也必须相同（防泄露结构不因分流粒度而变）
 _lf = os.path.join(profiles_dir, "lazy.conf")
-_rf = os.path.join(profiles_dir, "routing.conf")
+_rf = os.path.join(profiles_dir, "routing_v3.conf")
 if os.path.isfile(_lf) and os.path.isfile(_rf):
     a, b = dns_kv(_lf), dns_kv(_rf)
     diff = [k for k in DNS_KEYS if a.get(k) != b.get(k)]
@@ -229,9 +229,9 @@ if os.path.isfile(_lf) and os.path.isfile(_rf):
         for k in diff:
             fails.append(f"lazy 与 routing 的 DNS 段不一致：`{k}`\n"
                          f"        lazy.conf:    {a.get(k)}\n"
-                         f"        routing.conf: {b.get(k)}")
+                         f"        routing_v3.conf: {b.get(k)}")
     else:
-        oks.append(f"lazy.conf 与 routing.conf 的 {len(DNS_KEYS)} 个 DNS 键也逐字相同"
+        oks.append(f"lazy.conf 与 routing_v3.conf 的 {len(DNS_KEYS)} 个 DNS 键也逐字相同"
                    f"（防泄露结构不因分流粒度而变）")
 
 # ── ③ 规则顺序铁律 ──────────────────────────────────────────────────────────
@@ -312,16 +312,16 @@ for f in files:
 
     oks.append(f"{f}: {len(rs)} 条规则，顺序与 no-resolve 均符合铁律")
 
-# ── ④ routing.conf 的组顺序必须与 Egern v2.5 对齐 ───────────────────────────
+# ── ④ routing_v3.conf 的组顺序必须与 Egern v3 对齐 ───────────────────────────
 #
 # ⚠️ 为什么必须有这一条（这是**踩过两次**的坑）：
 #    [Proxy Group] 的**先后顺序**此前没有任何断言守着 —— 改一个组、挪一段注释，
 #    顺序就可能悄悄漂走，而所有其它断言（成员可解析、规则可解析、地区正则一致）
 #    **照样全绿**。老板两次发现"分流组前后顺序又错了"，两次都是靠肉眼。
-#    ⇒ 顺序是**被承诺过的对外特征**（README 明写"与 Egern v2.5 对齐"），
+#    ⇒ 顺序是**被承诺过的对外特征**（README 明写"与 Egern v3 对齐"），
 #      就必须有机械对账。
 #
-# 顺序来源（唯一真值）：仓库外的参考配置 Egern v2.5。
+# 顺序来源（唯一真值）：仓库外的参考配置 Egern v3。
 # ⚠️ 该文件**不在本仓库内**，所以断言采用"**把顺序写死在这里**"的做法：
 #    它是承诺值，不是从外部文件推导出来的。改顺序 = 必须同时改这里，
 #    这正是我们想要的 —— 逼改动者显式面对"我在改一个承诺"。
@@ -354,13 +354,13 @@ def group_order(path):
             out.append((ln, name))
     return out
 
-_rf_full = os.path.join(profiles_dir, "routing.conf")
+_rf_full = os.path.join(profiles_dir, "routing_v3.conf")
 if os.path.isfile(_rf_full):
     got = group_order(_rf_full)
     got_names = [n for _, n in got]
     if got_names == PG_ORDER:
-        oks.append(f"routing.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
-                   f"与 Egern v2.5 对齐 👍")
+        oks.append(f"routing_v3.conf: [Proxy Group] 的 {len(PG_ORDER)} 个组顺序"
+                   f"与 Egern v3 对齐 👍")
     else:
         diffs = []
         for i in range(max(len(got_names), len(PG_ORDER))):
@@ -370,19 +370,19 @@ if os.path.isfile(_rf_full):
                 line = got[i][0] if i < len(got) else None
                 diffs.append(f"        第 {i+1} 位：期望 `{a}`，实际 `{b}`"
                              + (f"（第 {line} 行）" if line else ""))
-        fails.append("routing.conf: [Proxy Group] 顺序与 Egern v2.5 不一致\n"
+        fails.append("routing_v3.conf: [Proxy Group] 顺序与 Egern v3 不一致\n"
                      + "\n".join(diffs)
                      + "\n        ⇒ 顺序是对外承诺（README 明写与 Egern 对齐）；"
                        "确实要改就同时更新本文件的 PG_ORDER")
 
     # ④-b min 版必须与完整版组顺序一致（min 是同一份配置去注释，不能各排各的）
-    _rf_min = os.path.join(profiles_dir, "routing.min.conf")
+    _rf_min = os.path.join(profiles_dir, "routing_v3.min.conf")
     if os.path.isfile(_rf_min):
         got_min = [n for _, n in group_order(_rf_min)]
         if got_min == got_names:
-            oks.append("routing.conf / routing.min.conf 的组顺序一致 👍")
+            oks.append("routing_v3.conf / routing_v3.min.conf 的组顺序一致 👍")
         else:
-            fails.append("routing.min.conf 的组顺序与 routing.conf 不同 —— "
+            fails.append("routing_v3.min.conf 的组顺序与 routing_v3.conf 不同 —— "
                          "min 版应由完整版机械生成，不该各排各的")
 
 # ── 输出 ────────────────────────────────────────────────────────────────────

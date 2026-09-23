@@ -41,15 +41,15 @@ S=./skill/scripts
 python "$S/check_surge_dns.py"  profiles/lazy.conf              # 期望 exit 0
 python "$S/check_surge_dns.py"  profiles/lazy.conf --strict      # medium 也算失败
 python "$S/check_surge_dns.py"  profiles/lazy.conf --quiet       # 只打印计数
-python "$S/audit_region_filters.py" profiles/routing.conf       # 期望 9/9
-python "$S/audit_region_filters.py" profiles/routing.conf -v    # 逐个组的关键词数
+python "$S/audit_region_filters.py" profiles/routing_v3.conf       # 期望 9/9
+python "$S/audit_region_filters.py" profiles/routing_v3.conf -v    # 逐个组的关键词数
 bash   ./skill/tests/architecture.sh                           # 期望 exit 0
 
 # ── 需要联网 ────────────────────────────────────────────────────────
 python "$S/audit_ruleset_content.py"  profiles/lazy.conf         # 期望 exit 0
 python "$S/audit_ruleset_content.py"  profiles/lazy.conf --show-domestic --force
 python "$S/audit_routing_coverage.py" profiles/lazy.conf         # 期望 33/33
-python "$S/audit_routing_coverage.py" profiles/routing.conf      # 期望 33/33（期望表自动切换）
+python "$S/audit_routing_coverage.py" profiles/routing_v3.conf      # 期望 33/33（期望表自动切换）
 python "$S/audit_routing_coverage.py" profiles/lazy.conf --show-all
 
 # ── 回归测试（6 阶段，15 断言）─────────────────────────────────────
@@ -259,7 +259,7 @@ FOREIGN_PROBES = {
 
 **分流版用另一套期望表**（`FOREIGN_PROBES_ROUTING`），精确到应用组名：
 
-| 探针 | `lazy.conf` 期望 | `routing.conf` 期望 |
+| 探针 | `lazy.conf` 期望 | `routing_v3.conf` 期望 |
 |:-----|:-----------------|:--------------------|
 | `chat.openai.com` | `AI` / `PROXY` | **`CHATGPT`** |
 | `api.anthropic.com` | `AI` / `PROXY` | **`CLAUDE`** |
@@ -353,8 +353,8 @@ DNS_KEYS = [
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing_v3.conf` ↔ `routing_v3.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing_v3.conf` | **防泄露标准不因分流粒度而变** |
 
 任一键只在一边存在、或值不同 → 失败。
 
@@ -363,7 +363,7 @@ DNS_KEYS = [
 差别只允许出现在 `[Proxy Group]` 与 `[Rule]` 的粒度上。
 
 ⚠️ 改 `DNS_KEYS` 时注意：它同时是 ②-a / ②-b / ②-c 的依据，
-且 `routing.min.conf` 是用脚本从 `routing.conf` 生成的 —— 生成脚本会**丢掉注释**，
+且 `routing_v3.min.conf` 是用脚本从 `routing_v3.conf` 生成的 —— 生成脚本会**丢掉注释**，
 所以 profile 里的 `# audit-waive:` 行必须**手动补回 min 版**（否则豁免失效、
 审计器会对 min 版报 HIGH）。这是踩过的坑，见 § 退出码约定上方的说明。
 

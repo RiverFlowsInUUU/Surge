@@ -15,8 +15,8 @@ Surge/
 ├── profiles/                    # 4 份配置 = 2 种分工 × 2 种形态
 │   ├── lazy.conf                # 懒人版（带注释）—— 改这份
 │   ├── lazy.min.conf            # 懒人版（纯配置）—— 导入用
-│   ├── routing.conf             # 分流版（带注释）—— 改这份
-│   └── routing.min.conf         # 分流版（纯配置）—— 导入用
+│   ├── routing_v3.conf             # 分流版（带注释）—— 改这份
+│   └── routing_v3.min.conf         # 分流版（纯配置）—— 导入用
 ├── icons/                       # 26 个 PNG（本地，不跨项目引用）
 ├── docs/                        # 01–11 专题
 ├── DetailsReadme/
@@ -103,7 +103,7 @@ README 是**产品介绍**：读者要知道「这东西是什么、怎么用」
 | 归类辩护 / 自我更正 | 「`WeChat` 为什么不算『开关』……」 | `CHANGELOG`（发生过什么）+ `DetailsReadme`（判据） |
 | 与评审 / 工单的对话 | 「原写 X 属误标，已按功能拆开」 | `CHANGELOG` |
 | 内部判据与断言名 | 「由 `architecture.sh` ④ 断言守着」 | `DetailsReadme` / `skill/` |
-| 设计沿革 / 跨仓比对 | 「与 Surge · Egern 同构」「组序与 Egern v2.5 对齐」「姐妹仓」 | 直接删 —— 读者不需要 |
+| 设计沿革 / 跨仓比对 | 「与 Surge · Egern 同构」「组序与 Egern v3 对齐」「姐妹仓」 | 直接删 —— 读者不需要 |
 | 逐键 / 推导 / 实测细节 | dns 逐键分工表、机制推导、审计读数 | `DetailsReadme` —— README 只留结论 |
 
 前两类要**挪走**（判据得能查到），跨仓比对类**直接删**：它对使用者的操作没有任何影响。
@@ -199,7 +199,7 @@ Clash 是 TUN `dns-hijack: any:53` + fake-ip。**照抄等于把不存在的机�
 
 这是**模板**不是软件。使用者关心的是「结构是什么样」，不是「补丁号」。
 
-本仓库有**两份配置**：`lazy.conf`（懒人版）与 `routing.conf`（分流版）。
+本仓库有**两份配置**：`lazy.conf`（懒人版）与 `routing_v3.conf`（分流版）。
 **这是分工关系，不是版本关系** —— 像"基础款"和"进阶款"，
 而不是 v1 和 v2。选一份用，不要叠加。
 
@@ -300,8 +300,8 @@ SKIP_NET=1 bash skill/tests/run.sh   # 跳过联网阶段
 ```
 1. bash skill/tests/run.sh                      → 15 passed, 0 failed
 2. python skill/scripts/check_surge_dns.py  profiles/lazy.conf     → exit 0
-3. python skill/scripts/check_surge_dns.py  profiles/routing.conf  → exit 0
-4. （改了地区关键词时）python skill/scripts/audit_region_filters.py profiles/routing.conf  → 9 passed
+3. python skill/scripts/check_surge_dns.py  profiles/routing_v3.conf  → exit 0
+4. （改了地区关键词时）python skill/scripts/audit_region_filters.py profiles/routing_v3.conf  → 9 passed
 5. （改了规则集引用时）python skill/scripts/audit_ruleset_content.py  profiles/{lazy,routing}.conf
 6. （改了规则时）      python skill/scripts/audit_routing_coverage.py profiles/{lazy,routing}.conf
 7. （改了标题时）重算所有锚点，检查相对链接

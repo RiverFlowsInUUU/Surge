@@ -57,11 +57,11 @@ python "$S/audit_ruleset_content.py"    profiles/lazy.conf   # 期望通过（�
 python "$S/audit_ruleset_content.py"    profiles/lazy.conf --show-domestic
 
 python "$S/audit_routing_coverage.py"   profiles/lazy.conf   # 期望 33/33（需联网）
-python "$S/audit_routing_coverage.py"   profiles/routing.conf # 分流版（期望表自动切换）
+python "$S/audit_routing_coverage.py"   profiles/routing_v3.conf # 分流版（期望表自动切换）
 python "$S/audit_routing_coverage.py"   profiles/lazy.conf --show-all
 
-python "$S/audit_region_filters.py"     profiles/routing.conf  # 期望 9/9（不需联网）
-python "$S/audit_region_filters.py"     profiles/routing.conf -v
+python "$S/audit_region_filters.py"     profiles/routing_v3.conf  # 期望 9/9（不需联网）
+python "$S/audit_region_filters.py"     profiles/routing_v3.conf -v
 
 bash ./skill/tests/run.sh                                  # 6 阶段，15 断言
 SKIP_NET=1 bash ./skill/tests/run.sh                       # 跳过联网阶段 4

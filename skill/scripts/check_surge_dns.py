@@ -255,7 +255,7 @@ def check_7_groups(sections):
        依据：官方文档「包含本地或其他策略组的策略」一节的示例本身就是前向引用 ——
        `PROXY = select, include-other-group="A,B"` 写在 `A` / `B` 定义之前。
        ⇒ 所以必须先把**全部**组名收集齐，再逐组校验；不能边扫边判。
-       本配置还刻意把组序对齐到 Egern v2.5（总入口 → 应用组 → 订阅槽位 → 地区组 → 兜底），
+       本配置还刻意把组序对齐到 Egern v3（总入口 → 应用组 → 订阅槽位 → 地区组 → 兜底），
        这必然产生前向引用（`Proxy` 引用它后面的地区组）。
     """
     proxy_entries = sections.get("proxy", [])

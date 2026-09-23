@@ -2,6 +2,36 @@
 
 本文件按 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 规范编写。
 
+> 🏷️ **文件名约定变更（2026-09-23）**：分流版由稳定名 `routing.conf` 改为**带版本号**的
+> `routing_v3.conf`（与姊妹仓 Egern 的 `routing_vN.yaml` 体例对齐）。此后每版新文件独立存在。
+> ⚠️ **旧地址 `profiles/routing.conf` / `profiles/routing.min.conf` 已删除**，
+> 订阅端请改用 `profiles/routing_v3.min.conf`。
+
+---
+
+## 2026-09-23
+
+### 新增
+
+- 🆕 **分流版升级为 `routing_v3`**，并把**规则段与 Egern v3 逐行对齐**（内容 + 顺序两侧对拍）：
+  - **删**游戏机主机名 3 条（`nintendo.net` / `playstation.net` / `xboxlive.com` → `Proxy`）——
+    Egern 侧无对应规则，为对齐而移除。`[General]` 的 `always-real-ip` **保留**，
+    这些主机名照旧拿到真实 IP，去向改为 `FINAL → Final`（同为代理链），`lazy.conf` 暂保留这三条。
+  - **挪**内网段（`LAN` / `private.txt`）到应用分流**之前** —— 对齐 Egern 的 `Lan.list` / `private` 位置。
+  - **挪** `Telegram` / `Twitter` 到 `Microsoft` 之后，`WeChat` 到 `Apple` 之后 —— 两侧顺序逐位一致。
+  - **补**注释态 `Proxy.list`（对标 Egern 的 `disabled: true` 条目，不参与匹配）。
+  - 规则数 `27 → 24`；`[Proxy Group]` 段与 `[General]` 段**一行未动**。
+
+### 变更
+
+- 📝 **文档全量同步 v3**：`README`（订阅地址 → `routing_v3.min.conf`、徽章规则数 `24`）、
+  `DetailsReadme`（§9.3 游戏机规则的现状、§14 规则逐条表）、`docs/04` `docs/07`（新增 §3.4 `v3` 沿革）
+  `docs/09` `docs/11` §5 `docs/12`（规则集清单与顺序表）、`skill/reference/hardening-template.md`
+  （规则骨架）、`skill/tests/architecture.sh`（文件名与 `Egern v3` 断言）。
+- 🔗 **修复 4 条失效锚点**：`DetailsReadme` / `docs/09` ×2 / `docs/11` 指向
+  `README.md#-两份配置` 的链接全部改为实际章节锚点 `#-两全其美皆合心意`
+  （README 章节名早已调整，链接没跟上；由 `skill/tests/check_links.py` 报出）。
+
 ---
 
 ## 2026-09-22

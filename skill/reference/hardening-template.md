@@ -334,30 +334,29 @@ RULE-SET,<surge-white-guard.list>,DIRECT
 # 2. 广告拦截
 RULE-SET,<surge-ads.list>,REJECT,pre-matching,extended-matching
 
-# 3. AI 分流
-RULE-SET,<AI.list>,AI,"update-interval=86400",no-resolve
+# 3. 局域网 / 内网（IP 段带 no-resolve ⇒ 提前不触发解析）
+RULE-SET,LAN,DIRECT,no-resolve
+RULE-SET,<private.txt>,DIRECT,no-resolve
 
-# 4. always-real-ip 主机名
-DOMAIN-SUFFIX,nintendo.net,Proxy
-DOMAIN-SUFFIX,playstation.net,Proxy
-DOMAIN-SUFFIX,xboxlive.com,Proxy
+# 4. AI 分流
+RULE-SET,<AI.list>,AI,"update-interval=86400",no-resolve
 
 # 5. Apple 系统
 RULE-SET,SYSTEM,DIRECT
 
-# 6. 局域网 / 内网
-RULE-SET,LAN,DIRECT,no-resolve
-RULE-SET,<private.txt>,DIRECT,no-resolve
-
-# 7. 国内直连（主承重墙）
+# 6. 国内直连（主承重墙）
 RULE-SET,<direct.txt>,DIRECT,no-resolve
 
-# 8. IP 规则，放最后
+# 7. IP 规则，放最后
 GEOIP,CN,DIRECT,no-resolve
 
-# 9. 兜底
+# 8. 兜底
 FINAL,Proxy,dns-failed
 ```
+
+> 📌 **可选的游戏机主机名三条**（`nintendo.net` / `playstation.net` / `xboxlive.com` → `Proxy`）：
+> 配合 `always-real-ip` 使用，`lazy.conf` 保留；`routing_v3.conf` 为与 Egern 对齐已删除
+> （删掉后这些主机名走 `FINAL → Final`，去向相同）。
 
 ### 4.1 铁律一：顺序
 

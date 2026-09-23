@@ -4,7 +4,7 @@
 
 审什么
 ──────
-`profiles/routing.conf` 里有 7 个地区组，它们的关键词是**两份拷贝**：
+`profiles/routing_v3.conf` 里有 7 个地区组，它们的关键词是**两份拷贝**：
 
   · 6 个地区组各自写自己的 `policy-regex-filter`（正向断言）；
   · `Other Regions` 的 `policy-regex-filter` 是**负向断言**，
@@ -37,8 +37,8 @@
 退出码：0 = 通过；1 = 有违规；2 = 环境问题（文件缺失 / 解析失败）。
 
 用法：
-    python skill/scripts/audit_region_filters.py profiles/routing.conf
-    python skill/scripts/audit_region_filters.py profiles/routing.conf -v
+    python skill/scripts/audit_region_filters.py profiles/routing_v3.conf
+    python skill/scripts/audit_region_filters.py profiles/routing_v3.conf -v
 """
 
 import argparse
@@ -49,8 +49,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _surge_common import parse_conf, split_csv, strip_comment  # noqa: E402
 
-# 7 个地区组的名字 —— 与 routing.conf 里的组名逐字对应。
-# ⚠️ 若你在 routing.conf 里改了组名，这里也要改（脚本会报缺失，不会静默通过）。
+# 7 个地区组的名字 —— 与 routing_v3.conf 里的组名逐字对应。
+# ⚠️ 若你在 routing_v3.conf 里改了组名，这里也要改（脚本会报缺失，不会静默通过）。
 REGION_GROUPS = ["Hong Kong", "USA", "Japan", "Taiwan", "Singapore", "Korea"]
 OTHER_GROUP = "Other Regions"
 

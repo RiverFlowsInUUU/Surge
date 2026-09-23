@@ -1,7 +1,7 @@
 # Surge 配置模板 · 完整技术文档
 
 > 面向想彻底弄明白「为什么这么写」的读者。
-> 只想赶紧用起来 → 看 [`README`](../README.md) 的 [📥 两份配置](../README.md#-两份配置)。
+> 只想赶紧用起来 → 看 [`README`](../README.md) 的 [📥 两份配置](../README.md#-两全其美皆合心意)。
 >
 > 目录
 > [1 · 文件结构与两份形态](#1--文件结构与两份形态) ·
@@ -32,8 +32,8 @@ Surge/
 ├── profiles/
 │   ├── lazy.conf        # 懒人配置（带注释）—— 改这份
 │   ├── lazy.min.conf    # 同一个配置（纯配置，注释剥掉）—— 导入用
-│   ├── routing.conf     # 分流配置（带注释）—— 改这份
-│   └── routing.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
+│   ├── routing_v3.conf     # 分流配置（带注释）—— 改这份
+│   └── routing_v3.min.conf # 同一个配置（纯配置，注释剥掉）—— 导入用
 ├── icons/               # 26 个策略组图标（本地，不跨项目引用）
 ├── docs/                # 01–11 专题
 ├── DetailsReadme/       # 本文件
@@ -48,7 +48,7 @@ Surge/
 ```
 
 **两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 14 条，全量一个出口），
-`routing` 是分流版（26 组 / 27 条，按应用 + 按地区）。选一份用，不要叠加。
+`routing` 是分流版（26 组 / 24 条，按应用 + 按地区）。选一份用，不要叠加。
 分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
 [`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
 
@@ -285,7 +285,7 @@ Node-D = https, 203.0.113.20, 443, underlying-proxy="Node-A", skip-cert-verify=t
 | `Node-C` | `https` | 中转链：经 `Node-B` 出去连 CDN 中转域名 |
 | `Node-D` | `https` | 经 `Node-A` 中转 |
 
-**`routing.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
+**`routing_v3.conf` —— 7 条**，多出的 3 条是地区样本，**名字里带地区关键词**：
 
 ```
 Node-HK-01 / Node-HK-02   # 中国香港
@@ -474,7 +474,8 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 于是它们最终落 `FINAL → Proxy`，其解析必须由节点远端完成 —— 这本身没问题
 （远端解析更准）。但**本地若需要它的地址**（NAT 检测要真实 IP），就会出问题。
 
-⇒ 所以本配置里有这三条：
+⇒ 所以**懒人版**用三条 `DOMAIN` 类规则（**无需 DNS**）先接住它们，
+让后面那些 IP 规则不必为了判它们而解析：
 
 ```
 DOMAIN-SUFFIX,nintendo.net,Proxy
@@ -482,7 +483,9 @@ DOMAIN-SUFFIX,playstation.net,Proxy
 DOMAIN-SUFFIX,xboxlive.com,Proxy
 ```
 
-用 `DOMAIN` 类规则（**无需 DNS**）先接住它们，让后面那些 IP 规则不必为了判它们而解析。
+⚠️ **`routing_v3.conf` 已删除这三条**（2026-09-23，与 Egern v3 逐行对齐；Egern 侧无对应规则）。
+`always-real-ip` 保留不变 —— 这些主机名照旧拿到真实 IP，只是改为落到 `FINAL → Final`，
+**去向与三条规则一致**（都走代理链），差别只在不再单独占一节。
 
 ---
 
@@ -659,9 +662,9 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | `AI` | `smart` | `Node-C` / `Node-D` | `AI.list` |
 | `AD` | `select` | `REJECT` / `DIRECT` | 独立手动开关（不被规则引用，见 §13.3） |
 
-**`routing.conf` —— 26 个组**
+**`routing_v3.conf` —— 26 个组**
 
-组序与 Egern v2.5 **逐位对齐**（由 `skill/tests/architecture.sh` 的 ④ 断言守着）。
+组序与 Egern v3 **逐位对齐**（由 `skill/tests/architecture.sh` 的 ④ 断言守着）。
 
 | 层 | 组 | 类型 | 作用 |
 |:---|:---|:----:|:-----|
@@ -674,7 +677,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 | ⑤ 兜底 | `Final` | `select` | `include-other-group="Proxy"` |
 
 > 📌 **`WeChat` 的位置说明（别被分节编号误导）**：它在 `[Proxy Group]` 里排在 `Airport` 之后、
-> `AD` 之前，这是**位置**，随 Egern v2.5 的组序（`architecture.sh` ④ 断言守着），**不是功能归类**。
+> `AD` 之前，这是**位置**，随 Egern v3 的组序（`architecture.sh` ④ 断言守着），**不是功能归类**。
 > 判据是「有没有被规则引用」：`WeChat` 被 `RULE-SET,…,WeChat.list,WeChat` 引用 ⇒ 它是**应用组**；
 > `AD` 被刻意设计成**不被任何规则引用**（§13.3）⇒ 它才是本仓唯一的「开关」。
 > 配置里 `# --- ③ 订阅槽位 + 开关 ---` 这个分节标题同样是按**位置**切的。
@@ -691,7 +694,7 @@ AD    = select, REJECT, DIRECT, icon-url=…/AdBlock.png
 >
 > 完整推导见 [`docs/11` §2.2](../docs/11-分流版设计.md)。
 
-**应用组各自的默认取向**（首项即默认，与 Egern v2.5 对齐）：
+**应用组各自的默认取向**（首项即默认，与 Egern v3 对齐）：
 
 | 应用组 | 默认 | 备注 |
 |:-------|:----:|:-----|
@@ -770,24 +773,29 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 13 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
 | 14 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
-**`routing.conf` —— 27 条（三处不同）**
+**`routing_v3.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
 
 | # | 规则 | 策略 | 与 lazy 的差异 |
 |:-:|:-----|:----:|:---------------|
 | 1–3 | 白名单 / 广告拦截 ×2 | `DIRECT` / `REJECT` / `REJECT` | 同 lazy |
-| **4–8** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
-| **9–13** | 媒体社交：`Spotify` / `YouTubeMusic` / `YouTube` / `Telegram` / `Twitter` | 同名组 | **新增 5 条** |
-| **14–16** | 开发系统：`GitHub` / `Google` / `Microsoft` | 同名组 | **新增 3 条** |
-| **17** | 即时通讯：`WeChat` | `WeChat` | **新增 1 条** |
-| 18–26 | 游戏机 3 条 / SYSTEM / Apple / LAN / private / direct / GEOIP | — | 同 lazy |
-| **27** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+| **4–5** | 内网：`LAN` / `private.txt` | `DIRECT`（`no-resolve`） | **提前到应用之前**（对齐 Egern 的 `Lan.list` / `private` 位置） |
+| **6–10** | AI 厂商：`OpenAI` / `Gemini` / `Anthropic` / `Claude` / `AI` | `ChatGPT` / `Gemini` / `Claude` / `Claude` / `AI` | **新增 4 条**（`AI.list` 位置下移） |
+| **11–13** | 媒体：`Spotify` / `YouTubeMusic` / `YouTube` | 同名组 | **新增 3 条** |
+| **14–18** | `GitHub` / `Google` / `Microsoft` / `Telegram` / `Twitter` | 同名组 | **新增 5 条**（后两条置于 `Microsoft` 之后） |
+| 19–20 | Apple：`SYSTEM` / `Apple_All_No_Resolve.list` | `DIRECT` | 同 lazy（`SYSTEM` 内置保底仍独占） |
+| **21** | 即时通讯：`WeChat` | `WeChat` | **新增 1 条**，排在 `Apple` 之后 |
+| 22–23 | `direct.txt` / `GEOIP,CN` | `DIRECT`（`no-resolve`） | 同 lazy |
+| **24** | `FINAL,Final,dns-failed` | `Final` 组 | **兜底从 `Proxy` 改为选择组** |
+| — | ~~游戏机主机名 3 条~~ | — | **已删除**（Egern 侧无对应规则，为对齐而移除；`lazy.conf` 暂保留） |
 
-> 📌 **三处顺序要点**：
+> 📌 **三条顺序要点**：
 > 1. **厂商专属规则必须排在通用 `AI.list` 之前** —— 否则 AI 域名先被 `AI.list` 接走，
 >    `ChatGPT` / `Gemini` / `Claude` 组永远轮不到。
 > 2. **`GitHub.list` 必须排在 `direct.txt` 之前** —— `github.com` 同时被国内直连清单收录，
 >    排到后面就接不到它，"应用的代理取向"直接失效。
-> 3. 应用段整体排在 Apple / 内网 / 国内直连段**之前** —— 同样是"更具体的规则在前"。
+> 3. **内网段排在应用段之前、`WeChat` 排在 `Apple` 之后** —— 这两处位置是**对齐
+>    Egern v3 的结果**：内网清单里的域名不在任何应用清单中，IP 段又带 `no-resolve`
+>    不触发解析 ⇒ 提前与否语义等价，只为两侧顺序逐行一致。
 
 ### 14.1 为什么 Apple 规则集必须用 `No_Resolve` 版
 
@@ -954,8 +962,8 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 | 断言 | 比对对象 | 理由 |
 |:-----|:---------|:-----|
 | ②-a | `lazy.conf` ↔ `lazy.min.conf` | `.min.conf` 的定位是「去掉注释」，不是「裁剪配置」 |
-| ②-b | `routing.conf` ↔ `routing.min.conf` | 同上 |
-| ②-c | `lazy.conf` ↔ `routing.conf` | **防泄露标准不因分流粒度而变** |
+| ②-b | `routing_v3.conf` ↔ `routing_v3.min.conf` | 同上 |
+| ②-c | `lazy.conf` ↔ `routing_v3.conf` | **防泄露标准不因分流粒度而变** |
 
 比对的是两边共有的 **16 个 DNS 相关键**，逐字相同。改配置时两份都要动，只改一份会被拦下。
 
@@ -965,7 +973,7 @@ IP 类规则需要有已解析的地址。放在所有域名规则之后，使�
 ### 16.6 兜底：lazy 指 `Proxy`，routing 指 `Final` 组
 
 `lazy.conf` 的 `FINAL,Proxy,dns-failed` **直接**指 `Proxy` 组。
-`routing.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
+`routing_v3.conf` 改成 `FINAL,Final,dns-failed`，多挂一层 `select` 组 —— 这样你在面板上
 还能改兜底去向，代价是零。
 
 两者都**不做**「分流兜底的境内 / 境外切分」。国内直连靠 `direct.txt` + `GEOIP,CN`
@@ -1020,7 +1028,7 @@ Surge iOS 版不支持本地文件配置，需要把 profile 内容托管到一�
 
 1. **DNS 段不许只改一份，也不许只改一个配置。** 三组比对（`lazy` 两形态 / `routing` 两形态 /
    `lazy` ↔ `routing`）共 16 个键由测试逐字比对。要改就**四份一起改**。
-   ⚠️ 注意 `routing.min.conf` 是从 `routing.conf` 生成的，生成脚本会丢掉注释 ——
+   ⚠️ 注意 `routing_v3.min.conf` 是从 `routing_v3.conf` 生成的，生成脚本会丢掉注释 ——
    新加 `# audit-waive:` 行后要**手动补回 min 版**，否则审计器会对 min 版报 HIGH。
 2. **规则顺序铁律不许破。** 白名单 → REJECT → 域名类直连 → IP 类 → `FINAL`。
 3. **节点不许提交真实值。** `architecture.sh` 会拦。
