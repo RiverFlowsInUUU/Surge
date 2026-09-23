@@ -16,7 +16,8 @@
 - 🆕 **分流版升级为 `routing_v3`**，并把**规则段与 Egern v3 逐行对齐**（内容 + 顺序两侧对拍）：
   - **删**游戏机主机名 3 条（`nintendo.net` / `playstation.net` / `xboxlive.com` → `Proxy`）——
     Egern 侧无对应规则，为对齐而移除。`[General]` 的 `always-real-ip` **保留**，
-    这些主机名照旧拿到真实 IP，去向改为 `FINAL → Final`（同为代理链），`lazy.conf` 暂保留这三条。
+    这些主机名照旧拿到真实 IP，去向改为 `FINAL → Final`（同为代理链）。**`lazy.conf` / `lazy.min.conf`
+    同步删除这三条**（懒人版规则数 `14 → 11`）—— Egern `lazy.yaml` 本就没有对应规则。
   - **挪**内网段（`LAN` / `private.txt`）到应用分流**之前** —— 对齐 Egern 的 `Lan.list` / `private` 位置。
   - **挪** `Telegram` / `Twitter` 到 `Microsoft` 之后，`WeChat` 到 `Apple` 之后 —— 两侧顺序逐位一致。
   - **补**注释态 `Proxy.list`（对标 Egern 的 `disabled: true` 条目，不参与匹配）。

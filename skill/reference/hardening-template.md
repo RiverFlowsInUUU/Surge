@@ -354,10 +354,6 @@ GEOIP,CN,DIRECT,no-resolve
 FINAL,Proxy,dns-failed
 ```
 
-> 📌 **可选的游戏机主机名三条**（`nintendo.net` / `playstation.net` / `xboxlive.com` → `Proxy`）：
-> 配合 `always-real-ip` 使用，`lazy.conf` 保留；`routing_v3.conf` 为与 Egern 对齐已删除
-> （删掉后这些主机名走 `FINAL → Final`，去向相同）。
-
 ### 4.1 铁律一：顺序
 
 **白名单(DIRECT) → 黑名单(REJECT) → 常规分流（`direct.txt` / `GEOIP,CN`）**

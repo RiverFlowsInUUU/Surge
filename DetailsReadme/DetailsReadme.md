@@ -47,7 +47,7 @@ Surge/
     └── tests/                    # 6 阶段回归 + 4 个 fixture + 链接检查
 ```
 
-**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 14 条，全量一个出口），
+**两份配置是分工关系，不是版本关系**：`lazy` 是懒人版（3 组 / 11 条，全量一个出口），
 `routing` 是分流版（26 组 / 24 条，按应用 + 按地区）。选一份用，不要叠加。
 分流版的设计约束（`flatten` 的对应写法、Smart 组不能嵌套组、地区关键词双份）见
 [`docs/11-分流版设计.md`](../docs/11-分流版设计.md)。
@@ -474,18 +474,11 @@ NAT 类型检测（STUN）、时间同步（NTP）、游戏机配对，都需要
 于是它们最终落 `FINAL → Proxy`，其解析必须由节点远端完成 —— 这本身没问题
 （远端解析更准）。但**本地若需要它的地址**（NAT 检测要真实 IP），就会出问题。
 
-⇒ 所以**懒人版**用三条 `DOMAIN` 类规则（**无需 DNS**）先接住它们，
-让后面那些 IP 规则不必为了判它们而解析：
-
-```
-DOMAIN-SUFFIX,nintendo.net,Proxy
-DOMAIN-SUFFIX,playstation.net,Proxy
-DOMAIN-SUFFIX,xboxlive.com,Proxy
-```
-
-⚠️ **`routing_v3.conf` 已删除这三条**（2026-09-23，与 Egern v3 逐行对齐；Egern 侧无对应规则）。
-`always-real-ip` 保留不变 —— 这些主机名照旧拿到真实 IP，只是改为落到 `FINAL → Final`，
-**去向与三条规则一致**（都走代理链），差别只在不再单独占一节。
+⚠️ **两份配置都不再为它们单开规则**（2026-09-23，与 Egern 对齐 —— Egern 侧本就没有对应规则，
+`lazy` 一并删除）。`always-real-ip` 保留不变 —— 这些主机名照旧拿到真实 IP；
+未被域名规则接住的会走到 IP 类规则（`no-resolve` 对未解析的主机名**跳过**），
+最终落 `FINAL → Final`，解析由节点远端完成（远端解析更准）——
+**结果去向与原先三条规则一致**（同为代理链），差别只在不再单独占一节。
 
 ---
 
@@ -754,7 +747,7 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 
 `[Rule]` 是**有序的** —— 自上而下匹配，**第一条命中即决定去向**。
 
-**`lazy.conf` —— 14 条**
+**`lazy.conf` —— 11 条**
 
 | # | 规则 | 策略 | 选项 | 为什么排这里 |
 |:-:|:-----|:----:|:-----|:-------------|
@@ -762,16 +755,13 @@ Surge 的组名 / 节点名引用**不区分大小写地可解析**，但 `check
 | 2 | `RULE-SET,…,surge-ads.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 1 条（Jinx）。必须在 `direct.txt` / `GEOIP,CN` **之前** —— 否则国内广告域名被 `direct.txt` 接走 |
 | 3 | `RULE-SET,…,AWAvenue-Ads-Rule-Surge-RULE-SET.list` | `REJECT` | `pre-matching,extended-matching` | 黑名单第 2 条（AWAvenue）。顺序与 Egern 对齐，见 §11.4 |
 | 4 | `RULE-SET,…,AI.list` | `AI` | `update-interval=86400,no-resolve` | 纯域名集，显式 `no-resolve` |
-| 5 | `DOMAIN-SUFFIX,nintendo.net` | `Proxy` | — | 见 §9.3 |
-| 6 | `DOMAIN-SUFFIX,playstation.net` | `Proxy` | — | 同上 |
-| 7 | `DOMAIN-SUFFIX,xboxlive.com` | `Proxy` | — | 同上 |
-| 8 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
-| 9 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.1 |
-| 10 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
-| 11 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
-| 12 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
-| 13 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
-| 14 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
+| 5 | `RULE-SET,SYSTEM` | `DIRECT` | — | Apple 激活 / 推送 / 配对，内置权威集合，**保底** |
+| 6 | `RULE-SET,…,Apple_All_No_Resolve.list` | `DIRECT` | `update-interval=86400` | Apple 服务主体（覆盖面远大于 `SYSTEM`）。**必须用 No_Resolve 版**，见 §14.1 |
+| 7 | `RULE-SET,LAN` | `DIRECT` | `no-resolve` | 含 IP-CIDR，**必须** `no-resolve` |
+| 8 | `RULE-SET,…,private.txt` | `DIRECT` | `no-resolve` | 内网域名 |
+| 9 | `RULE-SET,…,direct.txt` | `DIRECT` | `no-resolve` | **主承重墙**，11 万条域名。见 §12 |
+| 10 | `GEOIP,CN,DIRECT` | `DIRECT` | `no-resolve` | IP 类规则，放最后 |
+| 11 | `FINAL,Proxy,dns-failed` | `Proxy` | `dns-failed` | 兜底 |
 
 **`routing_v3.conf` —— 24 条（内容与顺序逐行对齐 Egern v3）**
 
